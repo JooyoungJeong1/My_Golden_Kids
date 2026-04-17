@@ -6,10 +6,10 @@ class CommunityPost {
   final List<CommunityComment> comments;
   int likes;
   bool isLiked;
-  int reportCount; // 신고 누적 수
-  final List<String> reportedBy; // 신고한 유저 이메일 목록
+  int reportCount;
+  final List<String> reportedBy;
+  int views;
 
-  // 신고 3개 이상이면 숨김
   bool get isHidden => reportCount >= 3;
 
   CommunityPost({
@@ -22,9 +22,9 @@ class CommunityPost {
     this.isLiked = false,
     this.reportCount = 0,
     List<String>? reportedBy,
+    this.views = 0,
   }) : reportedBy = reportedBy ?? [];
 
-  // 해당 유저가 신고 가능한지 확인
   bool canReport(String userEmail) => !reportedBy.contains(userEmail);
 }
 

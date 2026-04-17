@@ -89,25 +89,23 @@ class _MyPageState extends State<MyPage> {
           ),
         ),
         const SizedBox(height: 20),
-        _buildMenuTile(
-          '✏️',
-          '내가 쓴 글',
-          '작성한 게시글 보기',
-          () => Navigator.push(
+        _buildMenuTile('✏️', '내가 쓴 글', '작성한 게시글 보기', () {
+          Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const CommunityPage()),
-          ),
-        ),
+            MaterialPageRoute(
+              builder: (_) => const CommunityPage(initialTab: 1), // ← 탭 인덱스 전달
+            ),
+          );
+        }),
         const SizedBox(height: 10),
-        _buildMenuTile(
-          '💬',
-          '내가 쓴 댓글',
-          '작성한 댓글 보기',
-          () => Navigator.push(
+        _buildMenuTile('💬', '내가 쓴 댓글', '작성한 댓글 보기', () {
+          Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const CommunityPage()),
-          ),
-        ),
+            MaterialPageRoute(
+              builder: (_) => const CommunityPage(initialTab: 2), // ← 탭 인덱스 전달
+            ),
+          );
+        }),
 
         const SizedBox(height: 10),
         _buildMenuTile('👤', '닉네임 변경', '7일에 한 번 변경 가능', () async {

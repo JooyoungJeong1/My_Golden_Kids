@@ -123,23 +123,56 @@ class _HomeScreenState extends State<HomeScreen> {
           ), // 제목 색 //gamjaFlower 나쁘지 않음 (본문에도)
         ),
         actions: [
-          IconButton(
-            onPressed: () async {
+          GestureDetector(
+            onTap: () async {
               await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const MyPage()),
               );
-              _refreshTip(); // 돌아왔을 때 아이콘 갱신
+              setState(() {});
+              _refreshTip();
             },
-            icon: Icon(
-              UserSession.isLoggedIn
-                  ? Icons.account_circle_rounded
-                  : Icons.account_circle_outlined,
-              color: const Color(0xFF555555),
-              size: 26,
-            ),
+            child: UserSession.isLoggedIn
+                ? Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFFDD835),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              UserSession.profileEmoji,
+                              style: const TextStyle(fontSize: 18),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          UserSession.nickname ?? '',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF222222),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : const Padding(
+                    padding: EdgeInsets.only(right: 12),
+                    child: Icon(
+                      Icons.account_circle_outlined,
+                      color: Color(0xFF555555),
+                      size: 26,
+                    ),
+                  ),
           ),
-          const SizedBox(width: 4),
         ],
       ),
       body: SafeArea(
