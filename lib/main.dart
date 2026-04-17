@@ -21,7 +21,7 @@ class BuriljiMaljiApp extends StatelessWidget {
           surface: const Color(0xFFF6F1F6), // 앱바 배경색
         ),
       ),
-      home: const HomeScreen(),
+      home: const MainScreen(),
     );
   }
 }

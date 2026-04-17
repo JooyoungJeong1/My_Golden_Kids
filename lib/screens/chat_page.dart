@@ -11,23 +11,68 @@ class _ChatItem {
   const _ChatItem({required this.text, required this.isMe});
 }
 
+// FAQ 데이터 (자주 묻는 질문)
+const List<Map<String, String>> _faqList = [
+  {
+    'q': '플라스틱은 모두 재활용 가능한가요?',
+    'a':
+        '오염이 심하거나 복합 재질(플라스틱+금속 등)이면 일반쓰레기로 분류됩니다.\n용기에 표시된 재질 마크를 확인하고, 깨끗이 씻어 배출하세요.',
+  },
+  {
+    'q': '음식물이 묻은 종이는?',
+    'a': '피자 박스처럼 기름이 심하게 밴 종이는 일반쓰레기입니다.\n약간 묻은 경우 오염 부분을 제거 후 배출 가능합니다.',
+  },
+  {
+    'q': '유리병 뚜껑은 어떻게 버려요?',
+    'a': '금속 뚜껑은 캔류로, 플라스틱 뚜껑은 플라스틱으로 분리해서 배출합니다.\n유리병 본체는 유리 수거함에 따로 넣어주세요.',
+  },
+  {
+    'q': '영수증(감열지)은 어디에 버려요?',
+    'a': '영수증, 택배 송장, 코팅지는 일반쓰레기입니다.\n재활용 표시가 있어도 감열 처리된 종이는 재활용이 안 됩니다.',
+  },
+  {
+    'q': '깨진 유리는 어떻게 버려요?',
+    'a':
+        '신문지나 종이로 단단히 싸서 \'깨진 유리\'라고 표시 후\n일반쓰레기 봉투에 넣어 배출하세요.\n\n⚠️ 유리 수거함에 넣으면 안 돼요!',
+  },
+  {
+    'q': '건전지·배터리는 어디에 버려요?',
+    'a':
+        '폐건전지 전용 수거함에 배출해요! 🔋\n\n대형마트, 주민센터, 아파트 단지 등에 있어요.\n충전식 배터리(리튬이온)는 전자제품 매장 수거함에 배출하세요.\n\n🚨 일반쓰레기로 버리면 화재 위험!',
+  },
+];
+
 // 키워드 → 카테고리 매핑
 const Map<String, String> _keywordMap = {
-  // 페트병 관련
-  '페트병': '페트병', '페트': '페트병', 'pet': '페트병', 'PET': '페트병',
-  // 종이 관련
-  '종이': '종이', '박스': '박스', '신문': '신문지', '신문지': '신문지',
-  '우유팩': '우유팩', '종이컵': '종이컵', '영수증': '영수증',
-  // 유리 관련
-  '유리': '유리병', '유리병': '유리병', '술병': '유리병', '소스병': '유리병',
-  // 캔 관련
-  '캔': '캔', '음료캔': '캔', '통조림': '통조림', '부탄가스': '부탄가스',
-  // 플라스틱 관련
-  '플라스틱': '플라스틱', '비닐': '비닐', '봉투': '비닐봉투',
-  '스티로폼': '스티로폼', '발포스티렌': '스티로폼',
-  // 기타
-  '건전지': '건전지', '배터리': '건전지', '형광등': '형광등',
-  '의약품': '의약품', '약': '의약품',
+  '페트병': '페트병',
+  '페트': '페트병',
+  'pet': '페트병',
+  'PET': '페트병',
+  '종이': '종이',
+  '박스': '박스',
+  '신문': '신문지',
+  '신문지': '신문지',
+  '우유팩': '우유팩',
+  '종이컵': '종이컵',
+  '영수증': '영수증',
+  '유리': '유리병',
+  '유리병': '유리병',
+  '술병': '유리병',
+  '소스병': '유리병',
+  '캔': '캔',
+  '음료캔': '캔',
+  '통조림': '통조림',
+  '부탄가스': '부탄가스',
+  '플라스틱': '플라스틱',
+  '비닐': '비닐',
+  '봉투': '비닐봉투',
+  '스티로폼': '스티로폼',
+  '발포스티렌': '스티로폼',
+  '건전지': '건전지',
+  '배터리': '건전지',
+  '형광등': '형광등',
+  '의약품': '의약품',
+  '약': '의약품',
 };
 
 // 카테고리별 기본 답변
@@ -188,7 +233,6 @@ const Map<String, List<Map<String, String>>> _followUpTree = {
   ],
 };
 
-// 키워드 인식 함수
 String? _detectKeyword(String text) {
   final lower = text.toLowerCase().replaceAll(' ', '');
   for (final entry in _keywordMap.entries) {
@@ -208,23 +252,35 @@ class ChatQuestionPage extends StatefulWidget {
 class _ChatQuestionPageState extends State<ChatQuestionPage> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final List<_ChatItem> _messages = [
-    const _ChatItem(
-      text: '안녕하세요! 버리는 방법이 헷갈리는 쓰레기가 있으신가요?\n\n예) 페트병, 유리병, 스티로폼 등을 입력해보세요 😊',
-      isMe: false,
-    ),
-  ];
+  final List<_ChatItem> _messages = [];
   bool _isTyping = false;
-  List<Map<String, String>> _currentFollowUps = []; // 현재 꼬리질문 목록
-  String? _lastCategory; // 마지막으로 답변한 카테고리
+  List<Map<String, String>> _currentFollowUps = [];
+  String? _lastCategory;
+
+  // FAQ 모드 빌드
+  String _buildFaqMenu() {
+    final buffer = StringBuffer();
+    buffer.writeln('자주 묻는 질문이에요! ❓\n');
+    for (int i = 0; i < _faqList.length; i++) {
+      buffer.writeln('${i + 1}. ${_faqList[i]['q']}');
+    }
+    buffer.writeln('\n번호를 입력하면 답변을 알려드려요!');
+    return buffer.toString();
+  }
 
   @override
   void initState() {
     super.initState();
-    // 처음에 빠른 질문 3개 보여주기
+    _messages.add(
+      _ChatItem(
+        text:
+            '안녕하세요! 버리는 방법이 헷갈리는 쓰레기가 있으신가요?\n\n품목 이름을 입력하거나, 아래 버튼을 눌러보세요 😊',
+        isMe: false,
+      ),
+    );
     _currentFollowUps = [
+      {'q': '❓ 자주 묻는 질문', 'a': ''},
       {'q': '페트병은요?', 'a': ''},
-      {'q': '음식물 묻은 종이는요?', 'a': ''},
       {'q': '스티로폼은요?', 'a': ''},
     ];
   }
@@ -247,6 +303,27 @@ class _ChatQuestionPageState extends State<ChatQuestionPage> {
     String reply = '';
     List<Map<String, String>> followUps = [];
 
+    // FAQ 번호 입력 체크 (1~6)
+    final trimmed = text.trim().replaceAll(RegExp(r'[^0-9]'), '');
+    final faqNum = trimmed.isNotEmpty ? int.tryParse(trimmed) : null;
+    if (faqNum != null && faqNum >= 1 && faqNum <= _faqList.length) {
+      final faq = _faqList[faqNum - 1];
+      reply = '❓ ${faq['q']}\n\n${faq['a']}';
+      _lastCategory = null;
+      followUps = [
+        {'q': '❓ 자주 묻는 질문', 'a': ''},
+        {'q': '다른 품목 물어보기', 'a': ''},
+      ];
+
+      setState(() {
+        _isTyping = false;
+        _messages.add(_ChatItem(text: reply, isMe: false));
+        _currentFollowUps = followUps;
+      });
+      _scrollToBottom();
+      return;
+    }
+
     // 꼬리질문 답변인지 확인
     bool isFollowUp = false;
     if (_lastCategory != null) {
@@ -255,7 +332,6 @@ class _ChatQuestionPageState extends State<ChatQuestionPage> {
         if (item['q'] == text) {
           reply = item['a']!;
           isFollowUp = true;
-          // 꼬리질문 후에도 다른 꼬리질문 남기기
           followUps = tree.where((t) => t['q'] != text).take(2).toList();
           followUps.add({'q': '다른 품목 물어보기', 'a': ''});
           break;
@@ -264,7 +340,6 @@ class _ChatQuestionPageState extends State<ChatQuestionPage> {
     }
 
     if (!isFollowUp) {
-      // 키워드 인식
       final keyword = _detectKeyword(text);
       if (keyword != null && _baseAnswers.containsKey(keyword)) {
         reply = _baseAnswers[keyword]!;
@@ -274,9 +349,9 @@ class _ChatQuestionPageState extends State<ChatQuestionPage> {
         reply = '어떤 품목이 궁금하세요? 😊\n\n품목 이름을 직접 입력하거나 아래 버튼을 눌러보세요!';
         _lastCategory = null;
         followUps = [
+          {'q': '❓ 자주 묻는 질문', 'a': ''},
           {'q': '페트병은요?', 'a': ''},
           {'q': '유리병은요?', 'a': ''},
-          {'q': '스티로폼은요?', 'a': ''},
           {'q': '건전지는요?', 'a': ''},
         ];
       } else {
@@ -284,9 +359,9 @@ class _ChatQuestionPageState extends State<ChatQuestionPage> {
             '"$text"에 대한 정보를 찾지 못했어요 😅\n\n품목 이름을 더 정확하게 입력해보세요!\n예) 페트병, 유리병, 스티로폼, 건전지 등';
         _lastCategory = null;
         followUps = [
+          {'q': '❓ 자주 묻는 질문', 'a': ''},
           {'q': '페트병은요?', 'a': ''},
           {'q': '비닐봉투는요?', 'a': ''},
-          {'q': '형광등은요?', 'a': ''},
         ];
       }
     }
@@ -299,10 +374,32 @@ class _ChatQuestionPageState extends State<ChatQuestionPage> {
     _scrollToBottom();
   }
 
-  // 꼬리질문 버튼 탭 처리
   void _onFollowUpTap(Map<String, String> item) {
+    if (item['q'] == '❓ 자주 묻는 질문') {
+      // FAQ 메뉴 표시
+      setState(() {
+        _messages.add(const _ChatItem(text: '❓ 자주 묻는 질문', isMe: true));
+        _isTyping = true;
+        _currentFollowUps = [];
+      });
+      _scrollToBottom();
+
+      Future.delayed(const Duration(milliseconds: 600), () {
+        if (!mounted) return;
+        setState(() {
+          _isTyping = false;
+          _messages.add(_ChatItem(text: _buildFaqMenu(), isMe: false));
+          _currentFollowUps = [
+            {'q': '다른 품목 물어보기', 'a': ''},
+          ];
+          _lastCategory = null;
+        });
+        _scrollToBottom();
+      });
+      return;
+    }
+
     if (item['q'] == '다른 품목 물어보기' || item['a'] == '') {
-      // 빈 답변이면 질문으로 처리
       String query = item['q']!
           .replaceAll('은요?', '')
           .replaceAll('는요?', '')
@@ -363,18 +460,17 @@ class _ChatQuestionPageState extends State<ChatQuestionPage> {
                         decoration: BoxDecoration(
                           color: const Color(0xFFF5F5F5),
                           borderRadius: BorderRadius.circular(20),
-                        ), // '오늘' 날짜 배경색
+                        ),
                         child: const Text(
                           '오늘',
                           style: TextStyle(
                             fontSize: 11,
                             color: Color(0xFF999999),
                           ),
-                        ), // '오늘' 날짜 텍스트 색
+                        ),
                       ),
                     ),
                     ..._messages.map((m) => _buildBubble(m)),
-                    // 꼬리질문 버튼들
                     if (!_isTyping && _currentFollowUps.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 8),
@@ -391,21 +487,25 @@ class _ChatQuestionPageState extends State<ChatQuestionPage> {
                                       vertical: 6,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: const Color(
-                                        0xFFFFF9C4,
-                                      ), // 빠른질문 버튼 배경
+                                      color: item['q'] == '❓ 자주 묻는 질문'
+                                          ? const Color(0xFFE3F2FD)
+                                          : const Color(0xFFFFF9C4),
                                       borderRadius: BorderRadius.circular(20),
                                       border: Border.all(
-                                        color: const Color(0xFFFDD835),
-                                      ), // 빠른질문 버튼 테두리
+                                        color: item['q'] == '❓ 자주 묻는 질문'
+                                            ? const Color(0xFF90CAF9)
+                                            : const Color(0xFFFDD835),
+                                      ),
                                     ),
                                     child: Text(
                                       item['q']!,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
-                                        color: Color(0xFF7A6000),
-                                      ), // 빠른질문 버튼 텍스트
+                                        color: item['q'] == '❓ 자주 묻는 질문'
+                                            ? const Color(0xFF1565C0)
+                                            : const Color(0xFF7A6000),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -453,12 +553,10 @@ class _ChatQuestionPageState extends State<ChatQuestionPage> {
                         maxLines: 4,
                         onSubmitted: _sendMessage,
                         decoration: InputDecoration(
-                          hintText: '예: 페트병, 유리병, 스티로폼...',
-                          hintStyle: const TextStyle(
-                            color: Color(0xFFBBBBBB),
-                          ), // 입력창 힌트 텍스트 색
+                          hintText: '품목 이름 또는 번호 입력...',
+                          hintStyle: const TextStyle(color: Color(0xFFBBBBBB)),
                           filled: true,
-                          fillColor: const Color(0xFFF7F4F8), // 입력창 배경색
+                          fillColor: const Color(0xFFF7F4F8),
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 12,
@@ -479,12 +577,12 @@ class _ChatQuestionPageState extends State<ChatQuestionPage> {
                         decoration: const BoxDecoration(
                           color: Color(0xFFFDD835),
                           shape: BoxShape.circle,
-                        ), // 전송 버튼 배경
+                        ),
                         child: const Icon(
                           Icons.send_rounded,
                           color: Color(0xFF5D4037),
                           size: 20,
-                        ), // 전송 버튼 아이콘 색
+                        ),
                       ),
                     ),
                   ],
@@ -507,9 +605,7 @@ class _ChatQuestionPageState extends State<ChatQuestionPage> {
         ),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: m.isMe
-              ? const Color(0xFFFFE978)
-              : const Color(0xFFF2EEF3), // 내 채팅, AI 말풍선 색
+          color: m.isMe ? const Color(0xFFFFE978) : const Color(0xFFF2EEF3),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(18),
             topRight: const Radius.circular(18),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/user_session.dart';
 import 'community_page.dart';
 import 'login_page.dart';
@@ -25,6 +26,7 @@ class _MyPageState extends State<MyPage> {
         backgroundColor: const Color(0xFFF6F1F6),
         surfaceTintColor: Colors.transparent,
         foregroundColor: const Color(0xFF222222),
+        automaticallyImplyLeading: false,
       ),
       body: SafeArea(
         child: UserSession.isLoggedIn ? _buildLoggedIn() : _buildLoggedOut(),
@@ -93,7 +95,7 @@ class _MyPageState extends State<MyPage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => const CommunityPage(initialTab: 1), // ← 탭 인덱스 전달
+              builder: (_) => const CommunityPage(initialTab: 1),
             ),
           );
         }),
@@ -102,11 +104,10 @@ class _MyPageState extends State<MyPage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => const CommunityPage(initialTab: 2), // ← 탭 인덱스 전달
+              builder: (_) => const CommunityPage(initialTab: 2),
             ),
           );
         }),
-
         const SizedBox(height: 10),
         _buildMenuTile('👤', '닉네임 변경', '7일에 한 번 변경 가능', () async {
           final changed = await Navigator.push<bool>(
@@ -122,12 +123,36 @@ class _MyPageState extends State<MyPage> {
             MaterialPageRoute(builder: (_) => const PasswordChangePage()),
           );
         }),
-
+        const SizedBox(height: 10),
+        _buildMenuTile('📩', '문의하기', '불편사항·건의사항 보내기', () async {
+          final Uri emailUri = Uri(
+            scheme: 'mailto',
+            path: 'yongyong8766@gmail.com',
+            queryParameters: {
+              'subject': '[버릴래말래] 앱 문의',
+              'body':
+                  '안녕하세요.\n\n문의 내용을 작성해주세요.\n\n---\n닉네임: ${UserSession.nickname ?? "미로그인"}\n',
+            },
+          );
+          if (await canLaunchUrl(emailUri)) {
+            await launchUrl(emailUri);
+          } else {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    '이메일 앱을 열 수 없어요. yongyong8766@gmail.com 으로 직접 보내주세요!',
+                  ),
+                ),
+              );
+            }
+          }
+        }),
         const SizedBox(height: 24),
         GestureDetector(
           onTap: () {
             UserSession.logout();
-            Navigator.pop(context);
+            setState(() {});
           },
           child: Container(
             height: 48,
@@ -243,6 +268,31 @@ class _MyPageState extends State<MyPage> {
             ),
           ),
         ),
+        const SizedBox(height: 20),
+        // 비로그인에서도 문의하기 가능
+        _buildMenuTile('📩', '문의하기', '불편사항·건의사항 보내기', () async {
+          final Uri emailUri = Uri(
+            scheme: 'mailto',
+            path: 'yongyong8766@gmail.com',
+            queryParameters: {
+              'subject': '[버릴래말래] 앱 문의',
+              'body': '안녕하세요.\n\n문의 내용을 작성해주세요.\n\n',
+            },
+          );
+          if (await canLaunchUrl(emailUri)) {
+            await launchUrl(emailUri);
+          } else {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    '이메일 앱을 열 수 없어요. yongyong8766@gmail.com 으로 직접 보내주세요!',
+                  ),
+                ),
+              );
+            }
+          }
+        }),
       ],
     );
   }

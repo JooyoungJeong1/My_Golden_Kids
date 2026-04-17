@@ -65,129 +65,6 @@ class _CommunityPageState extends State<CommunityPage> {
     }
 
     // 커뮤니티 진입 시 인기 게시글 팝업
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _showPopularPostPopup();
-    });
-  }
-
-  void _showPopularPostPopup() {
-    final visiblePosts = _posts
-        .where((p) => !p.isHidden && p.views >= 10)
-        .toList();
-    if (visiblePosts.isEmpty) return;
-
-    visiblePosts.sort((a, b) => b.views.compareTo(a.views));
-    final popular = visiblePosts.first;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
-          children: [
-            Text('🔥', style: TextStyle(fontSize: 20)),
-            SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                '지금 인기 게시글',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              popular.title,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF222222),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              popular.content,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 13,
-                color: Color(0xFF555555),
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                const Icon(
-                  Icons.visibility_outlined,
-                  size: 14,
-                  color: Color(0xFF999999),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  '${popular.views}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF999999),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Icon(
-                  Icons.favorite_rounded,
-                  size: 14,
-                  color: Color(0xFFE53935),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  '${popular.likes}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF999999),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Icon(
-                  Icons.chat_bubble_outline_rounded,
-                  size: 14,
-                  color: Color(0xFF999999),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  '${popular.comments.length}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF999999),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('닫기'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              final realIndex = _posts.indexOf(popular);
-              if (realIndex != -1) _openDetailPage(realIndex);
-            },
-            child: const Text(
-              '보러가기',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF5D4037),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   bool _isMyPost(CommunityPost post) {
@@ -367,6 +244,115 @@ class _CommunityPageState extends State<CommunityPage> {
     );
   }
 
+  Widget _buildPopularHighlight() {
+    final visiblePosts = _posts
+        .where((p) => !p.isHidden && p.views >= 10)
+        .toList();
+    if (visiblePosts.isEmpty) return const SizedBox.shrink();
+
+    visiblePosts.sort((a, b) => b.views.compareTo(a.views));
+    final popular = visiblePosts.first;
+    final realIndex = _posts.indexOf(popular);
+
+    return GestureDetector(
+      onTap: () {
+        if (realIndex != -1) _openDetailPage(realIndex);
+      },
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFFF8E1), Color(0xFFFFECB3)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFFFD54F), width: 1.5),
+        ),
+        child: Row(
+          children: [
+            const Text('🔥', style: TextStyle(fontSize: 24)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '지금 인기 게시글',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFF9A825),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    popular.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF222222),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.visibility_outlined,
+                        size: 13,
+                        color: Color(0xFF999999),
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        '${popular.views}',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF999999),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Icon(
+                        Icons.favorite_rounded,
+                        size: 13,
+                        color: Color(0xFFE53935),
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        '${popular.likes}',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF999999),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Icon(
+                        Icons.chat_bubble_outline_rounded,
+                        size: 13,
+                        color: Color(0xFF999999),
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        '${popular.comments.length}',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF999999),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded, color: Color(0xFFBBBBBB)),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildLoginRequired() {
     return Center(
       child: Column(
@@ -413,8 +399,10 @@ class _CommunityPageState extends State<CommunityPage> {
       var temp = _posts.asMap().entries.where((e) {
         final p = e.value;
         if (p.isHidden) return false;
-        if (UserSession.isLoggedIn && p.reportedBy.contains(UserSession.email!))
+        if (UserSession.isLoggedIn &&
+            p.reportedBy.contains(UserSession.email!)) {
           return false;
+        }
         return true;
       }).toList();
       temp = _applySorting(temp);
@@ -469,6 +457,9 @@ class _CommunityPageState extends State<CommunityPage> {
 
     return Column(
       children: [
+        // 인기 게시글 하이라이트
+        if (_tabIndex == 0) _buildPopularHighlight(),
+
         // 정렬 버튼 바
         Container(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
@@ -810,8 +801,9 @@ class _CommunityEditPageState extends State<CommunityEditPage> {
 
   void _submit() {
     if (_titleController.text.trim().isEmpty ||
-        _contentController.text.trim().isEmpty)
+        _contentController.text.trim().isEmpty) {
       return;
+    }
     final updatedPost = CommunityPost(
       author: widget.post.author,
       sessionId: widget.post.sessionId,
@@ -1112,8 +1104,9 @@ class _CommunityDetailPageState extends State<CommunityDetailPage> {
 
   void _addComment() {
     if (_authorController.text.trim().isEmpty ||
-        _commentController.text.trim().isEmpty)
+        _commentController.text.trim().isEmpty) {
       return;
+    }
     setState(() {
       _post.comments.add(
         CommunityComment(

@@ -49,8 +49,8 @@ class CategoryDetailPage extends StatelessWidget {
                     item.imageUrl != null
                         ? Image.asset(
                             item.imageUrl!,
-                            width: 52,
-                            height: 52,
+                            width: 70,
+                            height: 70,
                             fit: BoxFit.contain,
                           )
                         : Text(

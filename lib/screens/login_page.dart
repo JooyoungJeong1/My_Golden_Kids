@@ -30,7 +30,8 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
     UserSession.login(email, account['nickname']!);
-    Navigator.pop(context);
+
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   @override

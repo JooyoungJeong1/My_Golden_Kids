@@ -8,6 +8,9 @@ class UserSession {
   static final List<String> guestNicknames = [];
   static final Map<String, Map<String, String>> accounts = {};
 
+  // 팝업메세지 하루동안 안뜨게끔
+  static DateTime? popularPopupDismissedUntil;
+
   // 닉네임 마지막 변경 시각 (이메일별로 관리)
   static final Map<String, DateTime> _lastNicknameChange = {};
 

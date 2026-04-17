@@ -7,9 +7,61 @@ import 'photo_page.dart';
 import 'community_page.dart';
 import 'my_page.dart';
 import 'guide_page.dart';
-import 'faq_page.dart';
 import 'category_detail_page.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+// ───────────────────────────────────────────
+// 메인 화면 (하단 네비게이션)
+// ───────────────────────────────────────────
+
+class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  int _currentIndex = 0;
+
+  final List<Widget> _pages = [
+    const HomeScreen(),
+    const CommunityPage(),
+    const MyPage(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _pages[_currentIndex],
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          border: Border(top: BorderSide(color: Color(0xFFEAEAEA), width: 1)),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: (index) => setState(() => _currentIndex = index),
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.white,
+          selectedItemColor: const Color(0xFF5D4037),
+          unselectedItemColor: const Color(0xFF999999),
+          selectedFontSize: 11,
+          unselectedFontSize: 11,
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: '홈'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.forum_rounded),
+              label: '커뮤니티',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_rounded),
+              label: '마이페이지',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 // ───────────────────────────────────────────
 // 홈 화면
@@ -33,7 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
     '깨진 유리는 신문지로 싸서 일반쓰레기봉투에 넣어주세요!',
     '건전지와 형광등은 각각 전용 수거함이 따로 있어요!',
   ];
-  //오늘의 팁 문구
+
   late String _todayTip;
 
   @override
@@ -63,28 +115,24 @@ class _HomeScreenState extends State<HomeScreen> {
 
   static const List<CategoryItem> categories = [
     CategoryItem(
-      //icon: '📄',
       label: '종이류',
       subtitle: '박스·신문·책',
       bgColor: Color(0xFFFFFFFF),
       imageUrl: 'assets/images/종이류.png',
     ),
     CategoryItem(
-      //icon: '🥤',
       label: '캔류',
       subtitle: '음료·통조림',
       bgColor: Color(0xFFFFFFFF),
       imageUrl: 'assets/images/캔류.png',
     ),
     CategoryItem(
-      //icon: '🍶',
       label: '유리',
       subtitle: '병·깨진유리',
       bgColor: Color(0xFFFFFFFF),
       imageUrl: 'assets/images/유리류.png',
     ),
     CategoryItem(
-      //icon: '♻️',
       label: '플라스틱',
       subtitle: 'PET·PP·PE',
       bgColor: Color(0xFFFFFFFF),
@@ -97,7 +145,6 @@ class _HomeScreenState extends State<HomeScreen> {
       imageUrl: 'assets/images/비닐류.png',
     ),
     CategoryItem(
-      //icon: '🗑️',
       label: '기타·처치곤란',
       subtitle: '사진으로 확인하기',
       bgColor: Color(0xFFFFF9C4),
@@ -117,10 +164,10 @@ class _HomeScreenState extends State<HomeScreen> {
         title: Text(
           '버릴래말래',
           style: GoogleFonts.notoSans(
-            color: Color(0xFF222222),
+            color: const Color(0xFF222222),
             fontWeight: FontWeight.w800,
             fontSize: 25,
-          ), // 제목 색 //gamjaFlower 나쁘지 않음 (본문에도)
+          ),
         ),
         actions: [
           GestureDetector(
@@ -177,16 +224,19 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(14, 10, 14, 28),
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(14, 15, 14, 16),
+          // 앱바 - 배너 간격(왼쪽, 위, 오른쪽, 아래)
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeroBanner(context),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8), // 베너 - 팁 간격
               _buildTodayTip(),
-              const SizedBox(height: 12),
-              _buildCommunityButton(context),
-              const SizedBox(height: 18),
+              const SizedBox(height: 8), // 팁 - 4단계 간격
+              // 4단계 분리배출 가이드 (커뮤니티 자리로 이동)
+              _buildGuideButton(context),
+              const SizedBox(height: 20), // 4단계 - 카테고리 간격
               const Text(
                 '카테고리별 배출법',
                 style: TextStyle(
@@ -195,7 +245,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Color(0xFF222222),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 12), // 제목 - 그리드 간격
               GridView.builder(
                 itemCount: categories.length,
                 shrinkWrap: true,
@@ -204,7 +254,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisCount: 3,
                   crossAxisSpacing: 9,
                   mainAxisSpacing: 9,
-                  childAspectRatio: 0.88,
+                  childAspectRatio: 0.95,
                 ),
                 itemBuilder: (context, index) {
                   return CategoryCard(
@@ -223,10 +273,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 },
               ),
-              const SizedBox(height: 16),
-              _buildGuideButton(context),
-              const SizedBox(height: 10),
-              _buildFaqButton(context),
             ],
           ),
         ),
@@ -239,14 +285,11 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: const Color(0xFFFFFDE7), // 배너 배경색
+            color: const Color(0xFFFFFDE7),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: const Color(0xFFFFF176),
-              width: 1.5,
-            ), // 배너 테두리색
+            border: Border.all(color: const Color(0xFFFFF176), width: 1.5),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -259,16 +302,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Color(0xFFF9A825),
                   letterSpacing: 1,
                 ),
-              ), // 소제목 색
+              ),
               const SizedBox(height: 6),
               const Text(
                 '버리기 전에 한 번만',
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 17,
                   fontWeight: FontWeight.w800,
                   color: Color(0xFF222222),
                 ),
-              ), // 제목 색
+              ),
               const SizedBox(height: 4),
               const Text(
                 '쓰레기 종류를 모르겠을 때\n채팅이나 사진으로 바로 물어보세요',
@@ -277,8 +320,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Color(0xFF555555),
                   height: 1.4,
                 ),
-              ), // 배너 본문 텍스트 색
-              const SizedBox(height: 14),
+              ),
+              const SizedBox(height: 10),
               Row(
                 children: [
                   Expanded(
@@ -290,11 +333,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
                         decoration: BoxDecoration(
                           color: const Color(0xFFF7E079),
                           borderRadius: BorderRadius.circular(12),
-                        ), // 버튼 배경색
+                        ),
                         child: const Center(
                           child: Text(
                             '💬 채팅으로',
@@ -304,7 +347,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               color: Color(0xFF5D4037),
                             ),
                           ),
-                        ), // 버튼 텍스트 색
+                        ),
                       ),
                     ),
                   ),
@@ -326,7 +369,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: const Color(0xFFFAE275),
                             width: 1.5,
                           ),
-                          // '📷 사진으로' 버튼 테두리색
                         ),
                         child: const Center(
                           child: Text(
@@ -337,7 +379,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               color: Color(0xFF333333),
                             ),
                           ),
-                        ), // 버튼 텍스트 색
+                        ),
                       ),
                     ),
                   ),
@@ -391,9 +433,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8F5E9), // tip 박스 배경색
+        color: const Color(0xFFE8F5E9),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFC8E6C9)), // tip 박스 테두리색
+        border: Border.all(color: const Color(0xFFC8E6C9)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -411,7 +453,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF2E7D32),
                   ),
-                ), // 제목 색
+                ),
                 const SizedBox(height: 2),
                 Text(
                   _todayTip,
@@ -420,55 +462,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: Color(0xFF1B5E20),
                     height: 1.4,
                   ),
-                ), // tip 본문 텍스트 색
+                ),
               ],
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildCommunityButton(BuildContext context) {
-    return GestureDetector(
-      onTap: () async {
-        await Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const CommunityPage()),
-        );
-        _refreshTip();
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFF9C4), // 커뮤니티 버튼 배경색
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: const Color(0xFFFDD835),
-            width: 1.5,
-          ), // 커뮤니티 버튼 테두리색
-        ),
-        child: const Row(
-          children: [
-            Text('💬', style: TextStyle(fontSize: 20)),
-            SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                '여러분의 의견을 남겨주세요!',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF5D4037),
-                ),
-              ),
-            ), // 커뮤니티 버튼 텍스트 색
-            Icon(
-              Icons.chevron_right_rounded,
-              color: Color(0xFF5D4037),
-            ), // 커뮤니티 버튼 아이콘 색
-          ],
-        ),
       ),
     );
   }
@@ -484,63 +482,26 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       child: Container(
         width: double.infinity,
-        height: 48,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: const Color(0xFFEDE7F6), // '4단계 분리배출 가이드' 버튼 배경
-          borderRadius: BorderRadius.circular(14),
+          color: const Color(0xFFEDE7F6),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('📋', style: TextStyle(fontSize: 15)),
-            SizedBox(width: 8),
-            Text(
-              '4단계 분리배출 가이드',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF4527A0),
+            Text('📋', style: TextStyle(fontSize: 20)),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                '4단계 분리배출 가이드',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF4527A0),
+                ),
               ),
-            ), // 버튼 텍스트
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFaqButton(BuildContext context) {
-    return GestureDetector(
-      onTap: () async {
-        await Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const FaqPage()),
-        );
-        _refreshTip();
-      },
-      child: Container(
-        width: double.infinity,
-        height: 44,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: const Color(0xFFE0E0E0),
-            width: 1.5,
-          ), // '자주 묻는 질문' 버튼 테두리
-        ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('❓', style: TextStyle(fontSize: 14)),
-            SizedBox(width: 6),
-            Text(
-              '자주 묻는 질문',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF333333),
-              ),
-            ), // 버튼 텍스트
+            ),
+            Icon(Icons.chevron_right_rounded, color: Color(0xFF4527A0)),
           ],
         ),
       ),
