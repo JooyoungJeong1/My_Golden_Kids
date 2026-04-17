@@ -80,11 +80,11 @@ class _HomeScreenState extends State<HomeScreen> {
     '페트병은 라벨 제거 후 찌그러트려서 배출하면 더 많이 재활용돼요!',
     '우유팩은 종이류가 아닌 전용 수거함에 따로 배출해야 해요!',
     '비닐 라벨이 붙은 유리병은 라벨을 먼저 제거한 뒤 배출하세요!',
-    '음식물 묻은 비닐은 재활용이 안 돼요. 깨끗한 것만 비닐류로 배출하세요!',
-    '스티로폼은 플라스틱 수거함이 아닌 스티로폼 전용 수거함에 넣어야 해요!',
+    '오염된 비닐은 재활용이 안돼요! 깨끗한 것만 비닐류로 배출하세요!',
+    '스티로폼은 스티로폼 전용 수거함에 넣어야 해요!',
     '깨진 유리는 신문지로 싸서 일반쓰레기봉투에 넣어주세요!',
     '건전지와 형광등은 각각 전용 수거함이 따로 있어요!',
-  ];
+  ]; //오늘의 팁 문구
 
   late String _todayTip;
 
@@ -431,6 +431,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildTodayTip() {
     return Container(
+      height: 84,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: const Color(0xFFE8F5E9),
@@ -449,7 +450,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const Text(
                   '오늘의 팁',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 13, // "오늘의 팁" 글자 크기
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF2E7D32),
                   ),
@@ -458,7 +459,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Text(
                   _todayTip,
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 12, // 오늘의 팁 작은 글자 크기
                     color: Color(0xFF1B5E20),
                     height: 1.4,
                   ),
