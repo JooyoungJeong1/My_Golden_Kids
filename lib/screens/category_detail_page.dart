@@ -49,10 +49,10 @@ class CategoryDetailPage extends StatelessWidget {
                     item.imageUrl != null
                         ? Image.asset(
                             item.imageUrl!,
-                            width: 70,
-                            height: 70,
+                            width: 50,
+                            height: 50,
                             fit: BoxFit.contain,
-                          )
+                          ) //카테고리 박스 아이콘 사이즈
                         : Text(
                             item.icon ?? '',
                             style: const TextStyle(fontSize: 48),

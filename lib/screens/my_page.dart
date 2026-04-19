@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../models/user_session.dart';
+import '../services/log_service.dart';
 import 'community_page.dart';
 import 'login_page.dart';
 import 'signup_page.dart';
@@ -34,6 +34,9 @@ class _MyPageState extends State<MyPage> {
     );
   }
 
+  // ───────────────────────────────────────────
+  // 로그인 상태
+  // ───────────────────────────────────────────
   Widget _buildLoggedIn() {
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -49,7 +52,7 @@ class _MyPageState extends State<MyPage> {
           child: Row(
             children: [
               GestureDetector(
-                onTap: () => _showProfilePicker(),
+                onTap: _showProfilePicker,
                 child: Container(
                   width: 56,
                   height: 56,
@@ -114,7 +117,9 @@ class _MyPageState extends State<MyPage> {
             context,
             MaterialPageRoute(builder: (_) => const NicknameChangePage()),
           );
-          if (changed == true) setState(() {});
+          if (changed == true) {
+            setState(() {});
+          }
         }),
         const SizedBox(height: 10),
         _buildMenuTile('🔒', '비밀번호 변경', '현재 비밀번호 확인 후 변경', () {
@@ -124,29 +129,8 @@ class _MyPageState extends State<MyPage> {
           );
         }),
         const SizedBox(height: 10),
-        _buildMenuTile('📩', '문의하기', '불편사항·건의사항 보내기', () async {
-          final Uri emailUri = Uri(
-            scheme: 'mailto',
-            path: 'yongyong8766@gmail.com',
-            queryParameters: {
-              'subject': '[버릴래말래] 앱 문의',
-              'body':
-                  '안녕하세요.\n\n문의 내용을 작성해주세요.\n\n---\n닉네임: ${UserSession.nickname ?? "미로그인"}\n',
-            },
-          );
-          if (await canLaunchUrl(emailUri)) {
-            await launchUrl(emailUri);
-          } else {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    '이메일 앱을 열 수 없어요. yongyong8766@gmail.com 으로 직접 보내주세요!',
-                  ),
-                ),
-              );
-            }
-          }
+        _buildMenuTile('📩', '문의하기', '불편사항·건의사항 보내기', () {
+          _showInquiryDialog();
         }),
         const SizedBox(height: 24),
         GestureDetector(
@@ -177,6 +161,9 @@ class _MyPageState extends State<MyPage> {
     );
   }
 
+  // ───────────────────────────────────────────
+  // 비로그인 상태
+  // ───────────────────────────────────────────
   Widget _buildLoggedOut() {
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -270,33 +257,137 @@ class _MyPageState extends State<MyPage> {
         ),
         const SizedBox(height: 20),
         // 비로그인에서도 문의하기 가능
-        _buildMenuTile('📩', '문의하기', '불편사항·건의사항 보내기', () async {
-          final Uri emailUri = Uri(
-            scheme: 'mailto',
-            path: 'yongyong8766@gmail.com',
-            queryParameters: {
-              'subject': '[버릴래말래] 앱 문의',
-              'body': '안녕하세요.\n\n문의 내용을 작성해주세요.\n\n',
-            },
-          );
-          if (await canLaunchUrl(emailUri)) {
-            await launchUrl(emailUri);
-          } else {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    '이메일 앱을 열 수 없어요. yongyong8766@gmail.com 으로 직접 보내주세요!',
-                  ),
-                ),
-              );
-            }
-          }
+        _buildMenuTile('📩', '문의하기', '불편사항·건의사항 보내기', () {
+          _showInquiryDialog();
         }),
       ],
     );
   }
 
+  // ───────────────────────────────────────────
+  // 문의하기 다이얼로그
+  // ───────────────────────────────────────────
+  void _showInquiryDialog() {
+    final emailController = TextEditingController(
+      text: UserSession.isLoggedIn ? UserSession.email ?? '' : '',
+    );
+    final contentController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(ctx).viewInsets.bottom,
+          left: 16,
+          right: 16,
+          top: 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '문의하기',
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              '답변은 입력하신 이메일로 드려요',
+              style: TextStyle(fontSize: 12, color: Color(0xFF888888)),
+            ),
+            const SizedBox(height: 16),
+            // 이메일 입력 (로그인 시 자동 입력 + 읽기 전용)
+            TextField(
+              controller: emailController,
+              keyboardType: TextInputType.emailAddress,
+              readOnly: UserSession.isLoggedIn,
+              decoration: InputDecoration(
+                hintText: '이메일 주소',
+                filled: true,
+                fillColor: UserSession.isLoggedIn
+                    ? const Color(0xFFEEEEEE)
+                    : const Color(0xFFF7F4F8),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            // 문의 내용
+            TextField(
+              controller: contentController,
+              maxLines: 5,
+              decoration: InputDecoration(
+                hintText: '문의 내용을 입력해주세요',
+                filled: true,
+                fillColor: const Color(0xFFF7F4F8),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: () {
+                final email = emailController.text.trim();
+                final content = contentController.text.trim();
+
+                if (email.isEmpty || content.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('이메일과 문의 내용을 입력해주세요.')),
+                  );
+                  return;
+                }
+
+                // TODO: 백엔드 연결 시 아래 주석 해제 후 LogService 제거
+                // await ApiService.submitInquiry(email: email, content: content);
+
+                LogService.log(
+                  action: 'inquiry',
+                  detail: '문의내용: $content',
+                  userEmail: email,
+                );
+
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('문의가 접수되었어요! 빠르게 답변드릴게요 😊')),
+                );
+              },
+              child: Container(
+                width: double.infinity,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFDD835),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Center(
+                  child: Text(
+                    '문의 보내기',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF5D4037),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ───────────────────────────────────────────
+  // 메뉴 타일
+  // ───────────────────────────────────────────
   Widget _buildMenuTile(
     String emoji,
     String title,
@@ -345,6 +436,9 @@ class _MyPageState extends State<MyPage> {
     );
   }
 
+  // ───────────────────────────────────────────
+  // 프로필 이모지 선택
+  // ───────────────────────────────────────────
   void _showProfilePicker() {
     showModalBottomSheet(
       context: context,
