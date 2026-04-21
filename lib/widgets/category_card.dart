@@ -42,8 +42,8 @@ class CategoryCard extends StatelessWidget {
                     item.imageUrl != null
                         ? Image.asset(
                             item.imageUrl!,
-                            width: 50,
-                            height: 50,
+                            width: 35,
+                            height: 35,
                             fit: BoxFit.contain,
                           ) //카테고리 아이콘 사이즈
                         : Text(
