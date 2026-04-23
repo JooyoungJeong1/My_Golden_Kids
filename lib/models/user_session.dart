@@ -8,9 +8,6 @@ class UserSession {
   static final List<String> guestNicknames = [];
   static final Map<String, Map<String, String>> accounts = {};
 
-  // 팝업메세지 하루동안 안뜨게끔
-  static DateTime? popularPopupDismissedUntil;
-
   // 닉네임 마지막 변경 시각 (이메일별로 관리)
   static final Map<String, DateTime> _lastNicknameChange = {};
 
@@ -50,6 +47,7 @@ class UserSession {
     return true;
   }
 
+  // 비로그인으로 작성한 글 로그인해서 내가쓴 글로 인식
   static bool isMyPost(CommunityPost post) {
     if (isLoggedIn) {
       return post.author == nickname || post.sessionId == deviceSessionId;
@@ -69,6 +67,7 @@ class UserSession {
     nickname = null;
   }
 
+  // 비로그인 사용자를 구별하기 위한 임시 ID
   static final List<CommunityPost> globalPosts = [];
   static String? _deviceSessionId;
 

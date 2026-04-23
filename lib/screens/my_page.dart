@@ -26,7 +26,6 @@ class _MyPageState extends State<MyPage> {
         backgroundColor: const Color(0xFFF6F1F6),
         surfaceTintColor: Colors.transparent,
         foregroundColor: const Color(0xFF222222),
-        automaticallyImplyLeading: false,
       ),
       body: SafeArea(
         child: UserSession.isLoggedIn ? _buildLoggedIn() : _buildLoggedOut(),
@@ -93,6 +92,8 @@ class _MyPageState extends State<MyPage> {
             ],
           ),
         ),
+
+        // 마이페이지 내부 박스
         const SizedBox(height: 20),
         _buildMenuTile('✏️', '내가 쓴 글', '작성한 게시글 보기', () {
           Navigator.push(

@@ -52,11 +52,11 @@ class CategoryDetailPage extends StatelessWidget {
                             width: 50,
                             height: 50,
                             fit: BoxFit.contain,
-                          ) //카테고리 박스 아이콘 사이즈
+                          ) //카테고리 박스 내 아이콘 사이즈
                         : Text(
                             item.icon ?? '',
                             style: const TextStyle(fontSize: 48),
-                          ),
+                          ), // 이미지파일 외 이모지 사이즈
                     const SizedBox(height: 10),
                     Text(
                       item.label,
@@ -64,7 +64,7 @@ class CategoryDetailPage extends StatelessWidget {
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
                         color: Color(0xFF222222),
-                      ),
+                      ), // 카테고리 텍스트
                     ),
                     const SizedBox(height: 6),
                     Text(
@@ -77,6 +77,8 @@ class CategoryDetailPage extends StatelessWidget {
                   ],
                 ),
               ),
+
+              // 4단계 분리배출 카드
               const SizedBox(height: 14),
               ...detail.steps.asMap().entries.map((e) {
                 final idx = e.key;
@@ -98,7 +100,7 @@ class CategoryDetailPage extends StatelessWidget {
                         decoration: const BoxDecoration(
                           color: Color(0xFFFFF3B0),
                           shape: BoxShape.circle,
-                        ), // 단계 번호 원 배경
+                        ), // 번호 원 배경
                         child: Center(
                           child: Text(
                             '${idx + 1}',
@@ -106,9 +108,9 @@ class CategoryDetailPage extends StatelessWidget {
                               fontSize: 13,
                               fontWeight: FontWeight.w800,
                               color: Color(0xFF7A6000),
-                            ),
+                            ), // 원 안쪽 번호 텍스트
                           ),
-                        ), // 단계 번호 텍스트 색
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -122,7 +124,7 @@ class CategoryDetailPage extends StatelessWidget {
                                 fontWeight: FontWeight.w800,
                                 color: Color(0xFF222222),
                               ),
-                            ),
+                            ), // 4단계 분리배출 제목 텍스트
                             const SizedBox(height: 3),
                             Text(
                               step.description,
@@ -130,7 +132,7 @@ class CategoryDetailPage extends StatelessWidget {
                                 fontSize: 13,
                                 color: Color(0xFF555555),
                                 height: 1.5,
-                              ),
+                              ), // 4단계 분리배출 본문 텍스트
                             ),
                           ],
                         ),
