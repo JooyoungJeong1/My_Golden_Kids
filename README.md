@@ -1,17 +1,23 @@
 # trash_app
 
-A new Flutter project.
+##실행 방법
+1. Flutter 설치
+Flutter 공식 사이트에서 설치
+-까다로움...유튜브 참고하시는게 좋을 듯
+bashflutter --version  # 설치 확인
 
-## Getting Started
+3. 프로젝트 클론
+bashgit clone https://github.com/JooyoungJeong1/My_Golden_Kids.git
+cd My_Golden_Kids
+git checkout UI/main
 
-This project is a starting point for a Flutter application.
+5. 패키지 설치
+bashflutter pub get
 
-A few resources to get you started if this is your first Flutter project:
+7. 앱 실행
+bashflutter run
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+Windows에서 실행 시 개발자 모드 필
+설정 → 개인 정보 및 보안 → 개발자용 → 개발자 모드 ON
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+
