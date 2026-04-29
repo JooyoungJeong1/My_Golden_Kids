@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:image_picker/image_picker.dart';
+import 'package:http_parser/http_parser.dart';
+
+const String baseUrl = 'http://211.104.25.94:8000';
 
 // ───────────────────────────────────────────
 // 사진 페이지
@@ -16,37 +22,51 @@ class _PhotoQuestionPageState extends State<PhotoQuestionPage> {
   String _resultName = '';
   String _resultSteps = '';
   List<Map<String, String>> _resultBadges = [];
+  final ImagePicker _picker = ImagePicker();
 
-  void _analyze() async {
+  Future<void> _analyze(ImageSource source) async {
+    final XFile? image = await _picker.pickImage(source: source);
+    if (image == null) return;
+
     setState(() {
       _isAnalyzing = true;
       _showResult = false;
     });
 
-    // 여기에 http
-    // final response = await http.post(...);
-    // final data = jsonDecode(response.body);
+    try {
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/photo/analyze'),
+      );
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'file',
+          await image.readAsBytes(),
+          filename: image.name,
+          contentType: MediaType('image', 'jpeg'),
+        ),
+      );
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
 
-    // 지금은 임시 더미 데이터 연동 전 출력물
-    final data = {
-      "name": "페트병 (PET)",
-      "steps": "① 라벨 제거\n② 내용물 비우고 헹구기\n③ 찌그러트려 뚜껑 닫기\n④ 플라스틱 분리수거함에 배출",
-      "badges": [
-        {"label": "플라스틱 ♻️", "bgColor": "C8E6C9", "textColor": "1B5E20"},
-        {"label": "재활용 가능", "bgColor": "FFF9C4", "textColor": "7A6000"},
-      ],
-    };
-
-    if (!mounted) return;
-    setState(() {
-      _isAnalyzing = false;
-      _showResult = true;
-      _resultName = data['name'] as String;
-      _resultSteps = data['steps'] as String;
-      _resultBadges = (data['badges'] as List)
-          .map((e) => Map<String, String>.from(e as Map))
-          .toList();
-    });
+      if (!mounted) return;
+      setState(() {
+        _isAnalyzing = false;
+        _showResult = true;
+        final item = data['items'][0];
+        _resultName = item['name'] ?? '';
+        _resultSteps = item['steps'] ?? '';
+        _resultBadges = (item['badges'] as List)
+            .map((e) => Map<String, String>.from(e as Map))
+            .toList();
+});
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isAnalyzing = false;
+      });
+    }
   }
 
   @override
@@ -65,7 +85,7 @@ class _PhotoQuestionPageState extends State<PhotoQuestionPage> {
             children: [
               const SizedBox(height: 16),
               GestureDetector(
-                onTap: _analyze,
+                onTap: () => _analyze(ImageSource.gallery),
                 child: Container(
                   width: 220,
                   height: 220,
@@ -152,7 +172,7 @@ class _PhotoQuestionPageState extends State<PhotoQuestionPage> {
                 children: [
                   Expanded(
                     child: GestureDetector(
-                      onTap: _analyze,
+                      onTap: () => _analyze(ImageSource.gallery),
                       child: Container(
                         height: 46,
                         decoration: BoxDecoration(
@@ -175,7 +195,7 @@ class _PhotoQuestionPageState extends State<PhotoQuestionPage> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: GestureDetector(
-                      onTap: _analyze,
+                      onTap: () => _analyze(ImageSource.camera),
                       child: Container(
                         height: 46,
                         decoration: BoxDecoration(
