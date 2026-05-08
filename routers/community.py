@@ -8,9 +8,7 @@ from models.tables import Post, Comment, Like, Report
 router = APIRouter(prefix="/community", tags=["커뮤니티"])
 
 
-# ─────────────────────────
 # 스키마
-# ─────────────────────────
 class PostCreate(BaseModel):
     user_id: Optional[int] = None
     session_id: Optional[str] = None
@@ -25,9 +23,7 @@ class CommentCreate(BaseModel):
     content: str
 
 
-# ─────────────────────────
 # 게시글 목록 조회
-# ─────────────────────────
 @router.get("/posts")
 def get_posts(db: Session = Depends(get_db)):
     posts = (
@@ -61,9 +57,7 @@ def get_posts(db: Session = Depends(get_db)):
     return result
 
 
-# ─────────────────────────
 # 게시글 작성
-# ─────────────────────────
 @router.post("/posts")
 def create_post(req: PostCreate, db: Session = Depends(get_db)):
     post = Post(
@@ -79,9 +73,7 @@ def create_post(req: PostCreate, db: Session = Depends(get_db)):
     return {"message": "게시글이 등록되었어요!", "post_id": post.id}
 
 
-# ─────────────────────────
 # 게시글 삭제
-# ─────────────────────────
 @router.delete("/posts/{post_id}")
 def delete_post(post_id: int, session_id: Optional[str] = None, user_id: Optional[int] = None, db: Session = Depends(get_db)):
     post = db.query(Post).filter(Post.id == post_id).first()
@@ -98,9 +90,7 @@ def delete_post(post_id: int, session_id: Optional[str] = None, user_id: Optiona
     return {"message": "게시글이 삭제되었어요."}
 
 
-# ─────────────────────────
 # 댓글 작성
-# ─────────────────────────
 @router.post("/posts/{post_id}/comments")
 def create_comment(post_id: int, req: CommentCreate, db: Session = Depends(get_db)):
     post = db.query(Post).filter(Post.id == post_id).first()
@@ -120,9 +110,7 @@ def create_comment(post_id: int, req: CommentCreate, db: Session = Depends(get_d
     return {"message": "댓글이 등록되었어요!", "comment_id": comment.id}
 
 
-# ─────────────────────────
 # 좋아요 토글
-# ─────────────────────────
 class LikeRequest(BaseModel):
     user_id: Optional[int] = None
     session_id: Optional[str] = None
@@ -152,9 +140,7 @@ def toggle_like(post_id: int, req: LikeRequest, db: Session = Depends(get_db)):
         return {"liked": True, "likes": post.likes}
 
 
-# ─────────────────────────
 # 신고
-# ─────────────────────────
 class ReportRequest(BaseModel):
     reporter_email: str
 
@@ -180,9 +166,7 @@ def report_post(post_id: int, req: ReportRequest, db: Session = Depends(get_db))
     return {"message": "신고가 접수되었어요.", "report_count": post.report_count}
 
 
-# ─────────────────────────
 # 내가 쓴 글 목록 조회
-# ─────────────────────────
 @router.get("/posts/my")
 def get_my_posts(user_id: Optional[int] = None, session_id: Optional[str] = None, db: Session = Depends(get_db)):
     query = db.query(Post).filter(Post.is_hidden == False)
@@ -203,9 +187,7 @@ def get_my_posts(user_id: Optional[int] = None, session_id: Optional[str] = None
     ]
 
 
-# ─────────────────────────
 # 내가 쓴 댓글 목록 조회
-# ─────────────────────────
 @router.get("/comments/my")
 def get_my_comments(user_id: Optional[int] = None, session_id: Optional[str] = None, db: Session = Depends(get_db)):
     query = db.query(Comment)

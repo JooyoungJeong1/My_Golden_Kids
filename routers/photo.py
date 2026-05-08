@@ -7,7 +7,8 @@ router = APIRouter(prefix="/photo", tags=["사진 분석"])
 # YOLO 모델 로딩 (서버 시작 시 1회만)
 try:
     from ultralytics import YOLO
-    model = YOLO("yolov8n.pt")
+    from huggingface_hub import hf_hub_download
+    model = YOLO(hf_hub_download("huggingleg12/recycle-yolo11", "weights/best.pt"))
     YOLO_AVAILABLE = True
 except Exception:
     YOLO_AVAILABLE = False
@@ -16,53 +17,71 @@ except Exception:
 
 # 감지 라벨 → 분리배출 정보 매핑
 LABEL_MAP = {
-    "bottle": {
-        "name": "페트병 / 유리병",
-        "category": "플라스틱 또는 유리",
-        "steps": "① 라벨 제거\n② 내용물 비우고 헹구기\n③ 찌그러트려 뚜껑 닫기\n④ 플라스틱 또는 유리 수거함에 배출",
-        "badges": [
-            {"label": "재활용 가능", "bgColor": "C8E6C9", "textColor": "1B5E20"},
-        ],
-    },
-    "cup": {
-        "name": "컵 / 용기",
-        "category": "플라스틱",
-        "steps": "① 내용물 완전히 비우기\n② 물로 헹구기\n③ 플라스틱 수거함에 배출",
-        "badges": [
-            {"label": "플라스틱 ♻️", "bgColor": "C8E6C9", "textColor": "1B5E20"},
-        ],
-    },
-    "can": {
-        "name": "캔",
-        "category": "캔류",
-        "steps": "① 내용물 비우고 헹구기\n② 찌그러트리기\n③ 캔 수거함에 배출",
-        "badges": [
-            {"label": "캔류 ♻️", "bgColor": "FFF9C4", "textColor": "7A6000"},
-        ],
-    },
-    "book": {
-        "name": "책 / 종이류",
-        "category": "종이류",
-        "steps": "① 코팅 표지, 스프링 분리\n② 끈으로 묶기\n③ 종이류 수거함에 배출",
-        "badges": [
-            {"label": "종이류 ♻️", "bgColor": "BBDEFB", "textColor": "0D47A1"},
-        ],
-    },
-    "cardboard": {
-        "name": "박스",
+    "종이": {
+        "name": "종이",
         "category": "종이류",
         "steps": "① 테이프·스티커 제거\n② 납작하게 펼치기\n③ 종이류 수거함에 배출",
-        "badges": [
-            {"label": "종이류 ♻️", "bgColor": "BBDEFB", "textColor": "0D47A1"},
-        ],
+        "badges": [{"label": "종이류 ♻️", "bgColor": "BBDEFB", "textColor": "0D47A1"}],
     },
-    "plastic bag": {
-        "name": "비닐봉투",
+    "종이팩": {
+        "name": "종이팩",
+        "category": "종이류",
+        "steps": "① 내용물 비우고 헹구기\n② 펼쳐서 말리기\n③ 종이팩 전용 수거함에 배출",
+        "badges": [{"label": "종이팩 ♻️", "bgColor": "BBDEFB", "textColor": "0D47A1"}],
+    },
+    "종이컵": {
+        "name": "종이컵",
+        "category": "종이류",
+        "steps": "① 내용물 비우고 헹구기\n② 종이컵 전용 수거함에 배출",
+        "badges": [{"label": "종이컵 ♻️", "bgColor": "BBDEFB", "textColor": "0D47A1"}],
+    },
+    "캔류": {
+        "name": "캔류",
+        "category": "캔류",
+        "steps": "① 내용물 비우고 헹구기\n② 찌그러트리기\n③ 캔 수거함에 배출",
+        "badges": [{"label": "캔류 ♻️", "bgColor": "FFF9C4", "textColor": "7A6000"}],
+    },
+    "재사용유리": {
+        "name": "재사용유리",
+        "category": "유리류",
+        "steps": "① 내용물 비우고 헹구기\n② 뚜껑 분리\n③ 유리 수거함에 배출",
+        "badges": [{"label": "유리류 ♻️", "bgColor": "E8EAF6", "textColor": "1A237E"}],
+    },
+    "색깔유리": {
+        "name": "색깔유리",
+        "category": "유리류",
+        "steps": "① 내용물 비우고 헹구기\n② 뚜껑 분리\n③ 유리 수거함에 배출",
+        "badges": [{"label": "유리류 ♻️", "bgColor": "E8EAF6", "textColor": "1A237E"}],
+    },
+    "페트": {
+        "name": "페트병",
+        "category": "플라스틱류",
+        "steps": "① 라벨 제거\n② 내용물 비우고 헹구기\n③ 찌그러트려 뚜껑 닫기\n④ 플라스틱 수거함에 배출",
+        "badges": [{"label": "플라스틱 ♻️", "bgColor": "C8E6C9", "textColor": "1B5E20"}],
+    },
+    "플라스틱": {
+        "name": "플라스틱",
+        "category": "플라스틱류",
+        "steps": "① 내용물 비우고 헹구기\n② 라벨 제거\n③ 플라스틱 수거함에 배출",
+        "badges": [{"label": "플라스틱 ♻️", "bgColor": "C8E6C9", "textColor": "1B5E20"}],
+    },
+    "비닐": {
+        "name": "비닐",
         "category": "비닐류",
         "steps": "① 내용물 완전히 비우기\n② 이물질 제거\n③ 비닐 전용 수거함에 배출",
-        "badges": [
-            {"label": "비닐류 ♻️", "bgColor": "F8BBD0", "textColor": "880E4F"},
-        ],
+        "badges": [{"label": "비닐류 ♻️", "bgColor": "F8BBD0", "textColor": "880E4F"}],
+    },
+    "스티로폼": {
+        "name": "스티로폼",
+        "category": "스티로폼류",
+        "steps": "① 이물질 제거\n② 테이프·스티커 제거\n③ 스티로폼 전용 수거함에 배출",
+        "badges": [{"label": "스티로폼 ♻️", "bgColor": "F3E5F5", "textColor": "4A148C"}],
+    },
+    "건전지": {
+        "name": "건전지",
+        "category": "건전지",
+        "steps": "① 방전 확인\n② 건전지 전용 수거함에 배출\n③ 편의점, 마트 등에 비치된 수거함 이용",
+        "badges": [{"label": "유해폐기물", "bgColor": "FFCCBC", "textColor": "BF360C"}],
     },
 }
 
