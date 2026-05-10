@@ -89,6 +89,7 @@ uvicorn main:app --reload
 
 ## 프로젝트 구조
 
+```
 lib/
 ├── models/
 │   ├── category.dart       # 카테고리 모델
@@ -100,14 +101,14 @@ lib/
 │   ├── community_page.dart # 커뮤니티
 │   ├── my_page.dart        # 마이페이지
 │   ├── login_page.dart     # 로그인
-│   ├── signup_page.dart    # 회원가입
-│   └── ...
+│   └── signup_page.dart    # 회원가입
 ├── services/
 │   ├── api_service.dart    # 백엔드 API 연결
 │   └── log_service.dart    # 로그 서비스
 └── widgets/
-├── category_card.dart  # 카테고리 카드
-└── typing_indicator.dart # 채팅 타이핑 애니메이션
+    ├── category_card.dart      # 카테고리 카드
+    └── typing_indicator.dart   # 채팅 타이핑 애니메이션
+```
 
 ---
 
