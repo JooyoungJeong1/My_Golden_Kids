@@ -1,23 +1,132 @@
-# trash_app
+# 버릴래말래 (Flutter App)
 
-## 실행 방법
-1. Flutter 설치
-Flutter 공식 사이트에서 설치
--까다로움...유튜브 참고하시는게 좋을 듯
-bashflutter --version  # 설치 확인
+분리배출 AI 도우미 앱 - 사진 또는 채팅으로 쓰레기 분리배출 방법을 알려주는 서비스
 
-3. 프로젝트 클론
-bashgit clone https://github.com/JooyoungJeong1/My_Golden_Kids.git
-cd My_Golden_Kids
-git checkout UI/main
+---
 
-5. 패키지 설치
-bashflutter pub get
+## 기술 스택
 
-7. 앱 실행
-bashflutter run
+- **Frontend**: Flutter
+- **Backend**: FastAPI + MySQL
+- **AI**: YOLO (분리배출 이미지 분석), Claude API (채팅)
 
-Windows에서 실행 시 개발자 모드 필
-설정 → 개인 정보 및 보안 → 개발자용 → 개발자 모드 ON
+---
 
+## 주요 기능
 
+### 🤖 AI 분석
+- 사진 촬영 또는 갤러리에서 이미지 업로드
+- YOLO 모델로 쓰레기 종류 자동 감지
+- 분리배출 방법 및 신뢰도 표시
+- 여러 품목 동시 감지 지원
+
+### 💬 AI 채팅
+- 품목명 입력 시 분리배출 방법 안내
+- 키워드 기반 빠른 답변 (하드코딩 FAQ)
+- 모르는 품목은 Claude API로 자동 연결
+- 꼬리질문 버튼으로 추가 정보 제공
+
+### 👤 회원 기능
+- 아이디/비밀번호 회원가입 및 로그인
+- 닉네임 변경 (7일 제한, 백엔드에서 관리)
+- 비밀번호 변경
+- 프로필 이모지 선택
+- 문의하기 (MySQL logs 테이블에 저장)
+
+### 🌿 커뮤니티
+- 게시글 작성 / 삭제
+- 댓글 작성
+- 좋아요 토글
+- 신고 기능 (3회 누적 시 자동 숨김)
+- 내가 쓴 글 / 내가 쓴 댓글 조회
+- 인기 게시글 하이라이트
+
+### 📋 카테고리별 배출법
+- 종이류, 캔류, 유리, 플라스틱, 비닐 등
+- 4단계 분리배출 가이드
+
+---
+
+## 서버 연결 방식
+
+자동 서버 탐색 (캐싱 방식) 적용:
+- 앱 실행 후 첫 API 호출 시 자동으로 서버 탐색
+- 안드로이드 에뮬레이터 → 배포 서버 순서로 탐색
+- 찾은 서버 주소를 캐싱하여 이후 API 호출에 재사용
+
+```dart
+// 탐색 우선순위
+'http://10.0.2.2:8000'       // 안드로이드 에뮬레이터
+'http://211.104.25.94:8000'  // 배포 서버
+```
+
+---
+
+## 시작하기
+
+### 1. 패키지 설치
+```bash
+flutter pub get
+```
+
+### 2. 앱 실행
+```bash
+flutter run
+```
+
+### 3. 백엔드 서버 실행
+```bash
+cd ../My_Golden_Kids
+venv\Scripts\activate
+uvicorn main:app --reload
+```
+
+서버가 켜지면:
+- API 서버: http://127.0.0.1:8000
+- API 문서: http://127.0.0.1:8000/docs
+
+---
+
+## 프로젝트 구조
+
+lib/
+├── models/
+│   ├── category.dart       # 카테고리 모델
+│   └── user_session.dart   # 로그인 세션 관리
+├── screens/
+│   ├── home_screen.dart    # 홈 화면
+│   ├── chat_page.dart      # AI 채팅
+│   ├── photo_page.dart     # 사진 분석
+│   ├── community_page.dart # 커뮤니티
+│   ├── my_page.dart        # 마이페이지
+│   ├── login_page.dart     # 로그인
+│   ├── signup_page.dart    # 회원가입
+│   └── ...
+├── services/
+│   ├── api_service.dart    # 백엔드 API 연결
+│   └── log_service.dart    # 로그 서비스
+└── widgets/
+├── category_card.dart  # 카테고리 카드
+└── typing_indicator.dart # 채팅 타이핑 애니메이션
+
+---
+
+## API 목록
+
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| POST | /auth/signup | 회원가입 |
+| POST | /auth/login | 로그인 |
+| PATCH | /auth/nickname | 닉네임 변경 |
+| PATCH | /auth/password | 비밀번호 변경 |
+| PATCH | /auth/profile-emoji | 프로필 이모지 변경 |
+| GET | /community/posts | 게시글 목록 |
+| POST | /community/posts | 게시글 작성 |
+| DELETE | /community/posts/{id} | 게시글 삭제 |
+| POST | /community/posts/{id}/comments | 댓글 작성 |
+| POST | /community/posts/{id}/like | 좋아요 토글 |
+| POST | /community/posts/{id}/report | 신고 |
+| GET | /community/posts/my | 내가 쓴 글 |
+| GET | /community/comments/my | 내가 쓴 댓글 |
+| POST | /photo/analyze | 사진 분석 |
+| POST | /logs | 로그 저장 |
