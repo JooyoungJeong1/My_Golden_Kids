@@ -224,7 +224,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          physics: const NeverScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(14, 15, 14, 16),
           // 앱바 - 배너 간격(왼쪽, 위, 오른쪽, 아래)
           child: Column(
