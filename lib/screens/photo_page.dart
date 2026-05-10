@@ -3,8 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:http_parser/http_parser.dart';
-
-const String baseUrl = 'http://211.104.25.94:8000';
+import '../services/api_service.dart';
 
 // ───────────────────────────────────────────
 // 사진 페이지
@@ -19,9 +18,8 @@ class PhotoQuestionPage extends StatefulWidget {
 class _PhotoQuestionPageState extends State<PhotoQuestionPage> {
   bool _isAnalyzing = false;
   bool _showResult = false;
-  String _resultName = '';
-  String _resultSteps = '';
-  List<Map<String, String>> _resultBadges = [];
+  String _errorMessage = '';
+  List<Map<String, dynamic>> _detectedItems = [];
   final ImagePicker _picker = ImagePicker();
 
   Future<void> _analyze(ImageSource source) async {
@@ -31,9 +29,12 @@ class _PhotoQuestionPageState extends State<PhotoQuestionPage> {
     setState(() {
       _isAnalyzing = true;
       _showResult = false;
+      _errorMessage = '';
+      _detectedItems = [];
     });
 
     try {
+      final baseUrl = await ApiService.getBaseUrl();
       final request = http.MultipartRequest(
         'POST',
         Uri.parse('$baseUrl/photo/analyze'),
@@ -51,20 +52,30 @@ class _PhotoQuestionPageState extends State<PhotoQuestionPage> {
       final data = jsonDecode(utf8.decode(response.bodyBytes));
 
       if (!mounted) return;
-      setState(() {
-        _isAnalyzing = false;
-        _showResult = true;
-        final item = data['items'][0];
-        _resultName = item['name'] ?? '';
-        _resultSteps = item['steps'] ?? '';
-        _resultBadges = (item['badges'] as List)
-            .map((e) => Map<String, String>.from(e as Map))
-            .toList();
-});
+
+      if (data['result'] == 'unknown' || (data['items'] as List).isEmpty) {
+        // 감지 실패
+        setState(() {
+          _isAnalyzing = false;
+          _showResult = true;
+          _errorMessage = data['message'] ?? '물체를 인식하기 어려워요.';
+        });
+      } else {
+        // 감지 성공 - 여러 개 처리
+        setState(() {
+          _isAnalyzing = false;
+          _showResult = true;
+          _detectedItems = (data['items'] as List)
+              .map((e) => Map<String, dynamic>.from(e as Map))
+              .toList();
+        });
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _isAnalyzing = false;
+        _showResult = true;
+        _errorMessage = '서버 연결에 실패했어요. 다시 시도해주세요.';
       });
     }
   }
@@ -84,6 +95,8 @@ class _PhotoQuestionPageState extends State<PhotoQuestionPage> {
           child: Column(
             children: [
               const SizedBox(height: 16),
+
+              // 사진 업로드 영역
               GestureDetector(
                 onTap: () => _analyze(ImageSource.gallery),
                 child: Container(
@@ -119,21 +132,27 @@ class _PhotoQuestionPageState extends State<PhotoQuestionPage> {
                           ),
                         )
                       : _showResult
-                      ? const Column(
+                      ? Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              Icons.check_circle_rounded,
+                              _errorMessage.isNotEmpty
+                                  ? Icons.error_outline_rounded
+                                  : Icons.check_circle_rounded,
                               size: 48,
-                              color: Color(0xFF4CAF50),
+                              color: _errorMessage.isNotEmpty
+                                  ? const Color(0xFFE53935)
+                                  : const Color(0xFF4CAF50),
                             ),
-                            SizedBox(height: 8),
+                            const SizedBox(height: 8),
                             Text(
-                              '분석 완료!',
+                              _errorMessage.isNotEmpty ? '인식 실패' : '분석 완료!',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF2E7D32),
+                                color: _errorMessage.isNotEmpty
+                                    ? const Color(0xFFE53935)
+                                    : const Color(0xFF2E7D32),
                               ),
                             ),
                           ],
@@ -168,6 +187,8 @@ class _PhotoQuestionPageState extends State<PhotoQuestionPage> {
                 ),
               ),
               const SizedBox(height: 16),
+
+              // 버튼
               Row(
                 children: [
                   Expanded(
@@ -221,65 +242,128 @@ class _PhotoQuestionPageState extends State<PhotoQuestionPage> {
                   ),
                 ],
               ),
+
+              // 결과 표시
               if (_showResult) ...[
                 const SizedBox(height: 16),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE8F5E9),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFC8E6C9)),
+
+                // 감지 실패
+                if (_errorMessage.isNotEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFEBEE),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFFFCDD2)),
+                    ),
+                    child: Column(
+                      children: [
+                        const Text('😅', style: TextStyle(fontSize: 32)),
+                        const SizedBox(height: 8),
+                        Text(
+                          _errorMessage,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFFB71C1C),
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        '🔍 AI 분석 결과',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF2E7D32),
-                        ),
+
+                // 감지 성공 - 여러 개 표시
+                if (_detectedItems.isNotEmpty)
+                  ..._detectedItems.map(
+                    (item) => Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8F5E9),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFC8E6C9)),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _resultName,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF222222),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        _resultSteps,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF444444),
-                          height: 1.6,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 6,
-                        children: _resultBadges
-                            .map(
-                              (b) => _buildBadge(
-                                b['label']!,
-                                Color(
-                                  int.parse('FF${b['bgColor']}', radix: 16),
-                                ),
-                                Color(
-                                  int.parse('FF${b['textColor']}', radix: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Text(
+                                '🔍 AI 분석 결과',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF2E7D32),
                                 ),
                               ),
-                            )
-                            .toList(),
+                              const Spacer(),
+                              // 신뢰도 표시
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF4CAF50),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  '${item['confidence']}%',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            item['name'] ?? '',
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF222222),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            item['steps'] ?? '',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF444444),
+                              height: 1.6,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 6,
+                            children: ((item['badges'] as List?) ?? []).map((
+                              b,
+                            ) {
+                              final badge = Map<String, String>.from(b as Map);
+                              return _buildBadge(
+                                badge['label']!,
+                                Color(
+                                  int.parse('FF${badge['bgColor']}', radix: 16),
+                                ),
+                                Color(
+                                  int.parse(
+                                    'FF${badge['textColor']}',
+                                    radix: 16,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
               ],
             ],
           ),

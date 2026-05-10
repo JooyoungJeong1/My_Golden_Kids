@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/typing_indicator.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
-const String baseUrl = 'http://211.104.25.94:8000';
+import '../services/api_service.dart';
 
 // ───────────────────────────────────────────
 // 채팅 페이지
@@ -359,23 +358,25 @@ class _ChatQuestionPageState extends State<ChatQuestionPage> {
           {'q': '건전지는요?', 'a': ''},
         ];
       } else {
-      // 모르는 질문은 Claude API 호출
-      try {
-        final response = await http.post(
-          Uri.parse('$baseUrl/chat?message=${Uri.encodeComponent(text)}'),
-        );
-        final data = jsonDecode(utf8.decode(response.bodyBytes));
-        reply = data['reply'];
-      } catch (e) {
-        reply = '"$text"에 대한 정보를 찾지 못했어요 😅\n\n품목 이름을 더 정확하게 입력해보세요!\n예) 페트병, 유리병, 스티로폼, 건전지 등';
+        // 모르는 질문은 Claude API 호출
+        try {
+          final base = await ApiService.getBaseUrl();
+          final response = await http.post(
+            Uri.parse('$base/chat?message=${Uri.encodeComponent(text)}'),
+          );
+          final data = jsonDecode(utf8.decode(response.bodyBytes));
+          reply = data['reply'];
+        } catch (e) {
+          reply =
+              '"$text"에 대한 정보를 찾지 못했어요 😅\n\n품목 이름을 더 정확하게 입력해보세요!\n예) 페트병, 유리병, 스티로폼, 건전지 등';
+        }
+        _lastCategory = null;
+        followUps = [
+          {'q': '❓ 자주 묻는 질문', 'a': ''},
+          {'q': '페트병은요?', 'a': ''},
+          {'q': '비닐봉투는요?', 'a': ''},
+        ];
       }
-      _lastCategory = null;
-      followUps = [
-        {'q': '❓ 자주 묻는 질문', 'a': ''},
-        {'q': '페트병은요?', 'a': ''},
-        {'q': '비닐봉투는요?', 'a': ''},
-      ];
-    }
     }
 
     setState(() {

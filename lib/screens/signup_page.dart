@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/user_session.dart';
+import '../services/api_service.dart';
 
 // ───────────────────────────────────────────
 // 회원가입 페이지
@@ -13,33 +14,24 @@ class SignupPage extends StatefulWidget {
 
 class _SignupPageState extends State<SignupPage> {
   final TextEditingController _nicknameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _idController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _passwordConfirmController =
       TextEditingController();
   String? _errorMsg;
 
-  // TODO: 백엔드 연결 시 이메일 인증 관련 변수 활성화
-  // bool _isVerified = false;
-  // bool _codeSent = false;
-  // final TextEditingController _codeController = TextEditingController();
-
   // ───────────────────────────────────────────
-  // 이메일 형식 검증
+  // 아이디 형식 검증 (영문+숫자, 4~20자)
   // ───────────────────────────────────────────
-  bool _isValidEmail(String email) {
-    return RegExp(r'^[\w.-]+@[\w.-]+\.[a-z]{2,}$').hasMatch(email);
+  bool _isValidId(String id) {
+    return RegExp(r'^[a-zA-Z0-9]+$').hasMatch(id) && id.isNotEmpty;
   }
 
   // ───────────────────────────────────────────
-  // 비밀번호 강도 검증 (영어 + 숫자 + 특수문자 + 8자 이상)
+  // 비밀번호 강도 검증 (4자 이상)
   // ───────────────────────────────────────────
   bool _isValidPassword(String password) {
-    if (password.length < 8) return false;
-    if (!password.contains(RegExp(r'[A-Za-z]'))) return false;
-    if (!password.contains(RegExp(r'[0-9]'))) return false;
-    if (!password.contains(RegExp(r'[*^%#$@!]'))) return false;
-    return true;
+    return password.length >= 4;
   }
 
   // ───────────────────────────────────────────
@@ -54,28 +46,24 @@ class _SignupPageState extends State<SignupPage> {
     return score;
   }
 
-  void _signup() {
+  void _signup() async {
     final nickname = _nicknameController.text.trim();
-    final email = _emailController.text.trim();
+    final id = _idController.text.trim();
     final password = _passwordController.text.trim();
     final confirm = _passwordConfirmController.text.trim();
 
-    if (nickname.isEmpty || email.isEmpty || password.isEmpty) {
+    if (nickname.isEmpty || id.isEmpty || password.isEmpty) {
       setState(() => _errorMsg = '모든 항목을 입력해주세요.');
       return;
     }
 
-    // 이메일 형식 검증
-    if (!_isValidEmail(email)) {
-      setState(() => _errorMsg = '올바른 이메일 형식이 아니에요.\n예) abc@gmail.com');
+    if (!_isValidId(id)) {
+      setState(() => _errorMsg = '아이디는 영문 또는 숫자만 입력해주세요.');
       return;
     }
 
-    // 비밀번호 강도 검증
     if (!_isValidPassword(password)) {
-      setState(
-        () => _errorMsg = '비밀번호는 영어, 숫자, 특수문자(*^%#\$@!)를\n포함한 8자 이상이어야 해요.',
-      );
+      setState(() => _errorMsg = '비밀번호는 4자리 이상이어야 해요.');
       return;
     }
 
@@ -83,33 +71,27 @@ class _SignupPageState extends State<SignupPage> {
       setState(() => _errorMsg = '비밀번호가 일치하지 않아요.');
       return;
     }
-    if (UserSession.accounts.containsKey(email)) {
-      setState(() => _errorMsg = '이미 사용 중인 이메일이에요.');
-      return;
+
+    try {
+      // 백엔드 회원가입 API 호출
+      final result = await ApiService.signup(
+        email: id,
+        password: password,
+        nickname: nickname,
+      );
+
+      if (result['error'] != null) {
+        setState(() => _errorMsg = result['error']);
+        return;
+      }
+
+      // 자동 로그인
+      UserSession.login(id, nickname);
+      if (!mounted) return;
+      Navigator.pop(context);
+    } catch (e) {
+      setState(() => _errorMsg = '회원가입 중 오류가 발생했어요. 다시 시도해주세요.');
     }
-
-    // TODO: 백엔드 연결 시 이메일 인증 확인 추가
-    // if (!_isVerified) {
-    //   setState(() => _errorMsg = '이메일 인증을 완료해주세요.');
-    //   return;
-    // }
-
-    // 계정 저장
-    UserSession.accounts[email] = {'nickname': nickname, 'password': password};
-    // 회원가입 전 같은 닉네임으로 쓴 글 연동
-    UserSession.guestNicknames.add(nickname);
-    // 자동 로그인
-    UserSession.login(email, nickname);
-    Navigator.pop(context);
-  }
-
-  @override
-  void dispose() {
-    _nicknameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    _passwordConfirmController.dispose();
-    super.dispose();
   }
 
   @override
@@ -142,12 +124,11 @@ class _SignupPageState extends State<SignupPage> {
             ),
             const SizedBox(height: 10),
 
-            // 이메일
+            // 아이디
             TextField(
-              controller: _emailController,
-              keyboardType: TextInputType.emailAddress,
+              controller: _idController,
               decoration: InputDecoration(
-                hintText: '이메일 (예: abc@gmail.com)',
+                hintText: '아이디 (영문 또는 숫자)',
                 filled: true,
                 fillColor: const Color(0xFFF7F4F8),
                 border: OutlineInputBorder(
@@ -156,26 +137,6 @@ class _SignupPageState extends State<SignupPage> {
                 ),
               ),
             ),
-
-            // TODO: 백엔드 연결 시 이메일 인증 UI 활성화
-            // const SizedBox(height: 8),
-            // Row(children: [
-            //   Expanded(
-            //     child: TextField(
-            //       controller: _codeController,
-            //       keyboardType: TextInputType.number,
-            //       decoration: InputDecoration(hintText: '인증 코드 6자리', ...),
-            //     ),
-            //   ),
-            //   const SizedBox(width: 8),
-            //   GestureDetector(
-            //     onTap: () async {
-            //       await ApiService.sendVerificationCode(_emailController.text);
-            //       setState(() => _codeSent = true);
-            //     },
-            //     child: Container(/* 인증코드 발송 버튼 */),
-            //   ),
-            // ]),
             const SizedBox(height: 10),
 
             // 비밀번호
@@ -184,7 +145,7 @@ class _SignupPageState extends State<SignupPage> {
               obscureText: true,
               onChanged: (_) => setState(() {}), // 강도 표시 실시간 업데이트
               decoration: InputDecoration(
-                hintText: '비밀번호 (영어+숫자+특수문자 8자 이상)',
+                hintText: '비밀번호 (4자리 이상)',
                 filled: true,
                 fillColor: const Color(0xFFF7F4F8),
                 border: OutlineInputBorder(
@@ -213,24 +174,6 @@ class _SignupPageState extends State<SignupPage> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
                   borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-
-            // 비밀번호 조건 안내
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF7F4F8),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Text(
-                '비밀번호 조건\n• 8자 이상\n• 영어 포함\n• 숫자 포함\n• 특수문자 포함 (* ^ % # \$ @ !)',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Color(0xFF888888),
-                  height: 1.6,
                 ),
               ),
             ),

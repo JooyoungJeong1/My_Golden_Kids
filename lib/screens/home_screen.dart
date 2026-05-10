@@ -9,6 +9,7 @@ import 'my_page.dart';
 import 'guide_page.dart';
 import 'category_detail_page.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 
 // ───────────────────────────────────────────
 // 메인 화면 (하단 네비게이션)
@@ -74,7 +75,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final bool _isAiConnected = false;
+  bool _isAiConnected = false;
 
   static final List<String> _tips = [
     '페트병은 라벨 제거 후 찌그러트려서 배출하면 더 많이 재활용돼요!',
@@ -97,13 +98,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _checkAiConnection() async {
-    // TODO: 실제 AI API 연결 시 아래 주석 해제
-    // try {
-    //   final response = await http.get(Uri.parse('YOUR_API_URL/health'));
-    //   if (mounted) setState(() => _isAiConnected = response.statusCode == 200);
-    // } catch (e) {
-    //   if (mounted) setState(() => _isAiConnected = false);
-    // }
+    try {
+      final response = await http.get(Uri.parse('YOUR_API_URL/health'));
+      if (mounted) setState(() => _isAiConnected = response.statusCode == 200);
+    } catch (e) {
+      if (mounted) setState(() => _isAiConnected = false);
+    }
   }
 
   void _refreshTip() {

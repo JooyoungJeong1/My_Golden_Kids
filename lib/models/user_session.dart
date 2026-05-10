@@ -1,63 +1,21 @@
-import 'community.dart';
 import '../services/log_service.dart';
 
 class UserSession {
+  // ───────────────────────────────────────────
+  // 현재 로그인 상태
+  // ───────────────────────────────────────────
   static String? nickname;
   static String? email;
+  static int? userId;
   static bool get isLoggedIn => nickname != null;
-  static final List<String> guestNicknames = [];
-  static final Map<String, Map<String, String>> accounts = {};
 
-  // 닉네임 마지막 변경 시각 (이메일별로 관리)
-  static final Map<String, DateTime> _lastNicknameChange = {};
-
-  // 닉네임 변경 가능 여부
-  static bool get canChangeNickname {
-    if (email == null) return false;
-    final last = _lastNicknameChange[email!];
-    if (last == null) return true;
-    return DateTime.now().difference(last).inDays >= 7;
-  }
-
-  // 닉네임 변경까지 남은 일수
-  static int get daysUntilNicknameChange {
-    if (email == null) return 0;
-    final last = _lastNicknameChange[email!];
-    if (last == null) return 0;
-    final diff = DateTime.now().difference(last).inDays;
-    return (7 - diff).clamp(0, 7);
-  }
-
-  // 닉네임 변경
-  static void changeNickname(String newNickname) {
-    if (!canChangeNickname) return;
-    if (email == null) return;
-    accounts[email!]!['nickname'] = newNickname;
-    nickname = newNickname;
-    _lastNicknameChange[email!] = DateTime.now();
-    LogService.log(action: 'nickname_change', detail: '닉네임 변경: $newNickname');
-  }
-
-  // 비밀번호 변경
-  static bool changePassword({required String current, required String newPw}) {
-    if (email == null) return false;
-    if (accounts[email!]!['password'] != current) return false;
-    accounts[email!]!['password'] = newPw;
-    LogService.log(action: 'password_change', detail: '비밀번호 변경');
-    return true;
-  }
-
-  // 비로그인으로 작성한 글 로그인해서 내가쓴 글로 인식
-  static bool isMyPost(CommunityPost post) {
-    if (isLoggedIn) {
-      return post.author == nickname || post.sessionId == deviceSessionId;
-    }
-    return post.sessionId == deviceSessionId;
-  }
-
-  static void login(String email, String nick) {
+  // ───────────────────────────────────────────
+  // 로그인 / 로그아웃
+  // ───────────────────────────────────────────
+  static void login(String email, String nick, {int? id}) {
     UserSession.email = email;
     UserSession.nickname = nick;
+    UserSession.userId = id;
     LogService.log(action: 'login', detail: '로그인: $email');
   }
 
@@ -65,10 +23,12 @@ class UserSession {
     LogService.log(action: 'logout', detail: '로그아웃: $email');
     email = null;
     nickname = null;
+    userId = null;
   }
 
-  // 비로그인 사용자를 구별하기 위한 임시 ID
-  static final List<CommunityPost> globalPosts = [];
+  // ───────────────────────────────────────────
+  // 비로그인 사용자 식별용 임시 ID
+  // ───────────────────────────────────────────
   static String? _deviceSessionId;
 
   static String get deviceSessionId {
@@ -76,7 +36,9 @@ class UserSession {
     return _deviceSessionId!;
   }
 
-  // 선택 가능한 프로필 이미지 목록
+  // ───────────────────────────────────────────
+  // 프로필 이모지
+  // ───────────────────────────────────────────
   static const List<String> profileEmojis = [
     '🌿',
     '🌱',
@@ -90,7 +52,7 @@ class UserSession {
     '🌈',
   ];
 
-  static String profileEmoji = '🌿'; // 현재 선택된 이미지
+  static String profileEmoji = '🌿';
 
   static void changeProfileEmoji(String emoji) {
     profileEmoji = emoji;

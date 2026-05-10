@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/user_session.dart';
+import '../services/api_service.dart';
 
 // ───────────────────────────────────────────
 // 닉네임 변경 페이지
@@ -15,6 +16,7 @@ class _NicknameChangePageState extends State<NicknameChangePage> {
   final TextEditingController _controller = TextEditingController();
   String? _errorMsg;
   String? _successMsg;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -22,7 +24,7 @@ class _NicknameChangePageState extends State<NicknameChangePage> {
     _controller.text = UserSession.nickname ?? '';
   }
 
-  void _submit() {
+  void _submit() async {
     final newNickname = _controller.text.trim();
 
     if (newNickname.isEmpty) {
@@ -33,23 +35,33 @@ class _NicknameChangePageState extends State<NicknameChangePage> {
       setState(() => _errorMsg = '현재 닉네임과 동일해요.');
       return;
     }
-    if (!UserSession.canChangeNickname) {
-      setState(
-        () => _errorMsg =
-            '닉네임은 7일에 한 번만 변경할 수 있어요.\n${UserSession.daysUntilNicknameChange}일 후에 변경 가능해요.',
-      );
-      return;
-    }
 
-    UserSession.changeNickname(newNickname);
     setState(() {
+      _isLoading = true;
       _errorMsg = null;
-      _successMsg = '닉네임이 변경되었어요! 😊';
     });
 
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) Navigator.pop(context, true);
-    });
+    try {
+      final result = await ApiService.changeNickname(
+        userId: UserSession.userId!,
+        newNickname: newNickname,
+      );
+
+      if (result['detail'] != null) {
+        setState(() => _errorMsg = result['detail']);
+        return;
+      }
+
+      UserSession.nickname = newNickname;
+      setState(() => _successMsg = '닉네임이 변경되었어요! 😊');
+      Future.delayed(const Duration(seconds: 1), () {
+        if (mounted) Navigator.pop(context, true);
+      });
+    } catch (e) {
+      setState(() => _errorMsg = '서버 연결에 실패했어요. 다시 시도해주세요.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -72,24 +84,17 @@ class _NicknameChangePageState extends State<NicknameChangePage> {
           padding: const EdgeInsets.all(16),
           children: [
             const SizedBox(height: 12),
-            // 변경 가능 여부 안내
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: UserSession.canChangeNickname
-                    ? const Color(0xFFE8F5E9)
-                    : const Color(0xFFFFF9C4),
+                color: const Color(0xFFE8F5E9),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Text(
-                UserSession.canChangeNickname
-                    ? '✅ 닉네임 변경이 가능해요!'
-                    : '⏳ ${UserSession.daysUntilNicknameChange}일 후에 변경할 수 있어요.\n닉네임은 7일에 한 번만 변경 가능해요.',
+              child: const Text(
+                '⏳ 닉네임은 7일에 한 번만 변경 가능해요.',
                 style: TextStyle(
                   fontSize: 13,
-                  color: UserSession.canChangeNickname
-                      ? const Color(0xFF2E7D32)
-                      : const Color(0xFF7A6000),
+                  color: Color(0xFF2E7D32),
                   height: 1.5,
                 ),
               ),
@@ -97,13 +102,10 @@ class _NicknameChangePageState extends State<NicknameChangePage> {
             const SizedBox(height: 20),
             TextField(
               controller: _controller,
-              enabled: UserSession.canChangeNickname,
               decoration: InputDecoration(
                 hintText: '새 닉네임',
                 filled: true,
-                fillColor: UserSession.canChangeNickname
-                    ? const Color(0xFFF7F4F8)
-                    : const Color(0xFFEEEEEE),
+                fillColor: const Color(0xFFF7F4F8),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
                   borderSide: BorderSide.none,
@@ -130,26 +132,27 @@ class _NicknameChangePageState extends State<NicknameChangePage> {
             ],
             const SizedBox(height: 18),
             GestureDetector(
-              onTap: UserSession.canChangeNickname ? _submit : null,
+              onTap: _isLoading ? null : _submit,
               child: Container(
                 height: 50,
                 decoration: BoxDecoration(
-                  color: UserSession.canChangeNickname
-                      ? const Color(0xFFFDD835)
-                      : const Color(0xFFEEEEEE),
+                  color: const Color(0xFFFDD835),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Center(
-                  child: Text(
-                    '변경하기',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: UserSession.canChangeNickname
-                          ? const Color(0xFF5D4037)
-                          : const Color(0xFF999999),
-                    ),
-                  ),
+                  child: _isLoading
+                      ? const CircularProgressIndicator(
+                          color: Color(0xFF5D4037),
+                          strokeWidth: 2,
+                        )
+                      : const Text(
+                          '변경하기',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF5D4037),
+                          ),
+                        ),
                 ),
               ),
             ),

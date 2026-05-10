@@ -6,6 +6,7 @@ import 'login_page.dart';
 import 'signup_page.dart';
 import 'nickname_change_page.dart';
 import 'password_change_page.dart';
+import '../services/api_service.dart';
 
 // ───────────────────────────────────────────
 // 마이페이지
@@ -296,18 +297,14 @@ class _MyPageState extends State<MyPage> {
               style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 4),
-            const Text(
-              '답변은 입력하신 이메일로 드려요',
-              style: TextStyle(fontSize: 12, color: Color(0xFF888888)),
-            ),
-            const SizedBox(height: 16),
+
             // 이메일 입력 (로그인 시 자동 입력 + 읽기 전용)
             TextField(
               controller: emailController,
               keyboardType: TextInputType.emailAddress,
               readOnly: UserSession.isLoggedIn,
               decoration: InputDecoration(
-                hintText: '이메일 주소',
+                hintText: '아이디',
                 filled: true,
                 fillColor: UserSession.isLoggedIn
                     ? const Color(0xFFEEEEEE)
@@ -335,19 +332,18 @@ class _MyPageState extends State<MyPage> {
             ),
             const SizedBox(height: 12),
             GestureDetector(
-              onTap: () {
+              onTap: () async {
                 final email = emailController.text.trim();
                 final content = contentController.text.trim();
 
                 if (email.isEmpty || content.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('이메일과 문의 내용을 입력해주세요.')),
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    const SnackBar(content: Text('아이디와 문의 내용을 입력해주세요.')),
                   );
                   return;
                 }
 
-                // TODO: 백엔드 연결 시 아래 주석 해제 후 LogService 제거
-                // await ApiService.submitInquiry(email: email, content: content);
+                await ApiService.submitInquiry(email: email, content: content);
 
                 LogService.log(
                   action: 'inquiry',
@@ -355,10 +351,11 @@ class _MyPageState extends State<MyPage> {
                   userEmail: email,
                 );
 
+                if (!ctx.mounted) return;
                 Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('문의가 접수되었어요! 빠르게 답변드릴게요 😊')),
-                );
+                ScaffoldMessenger.of(
+                  ctx,
+                ).showSnackBar(const SnackBar(content: Text('문의가 접수되었어요! 😊')));
               },
               child: Container(
                 width: double.infinity,

@@ -1,7 +1,8 @@
 import 'package:flutter/foundation.dart';
+import 'api_service.dart';
 
 // ───────────────────────────────────────────
-// 로그 서비스 (백엔드 연결 시 API 호출로 교체)
+// 로그 서비스 (백엔드 연결)
 // ───────────────────────────────────────────
 
 class LogEntry {
@@ -26,15 +27,11 @@ class LogEntry {
 }
 
 class LogService {
-  // 로컬 로그 저장 (백엔드 연결 전 임시)
-  static final List<LogEntry> _logs = [];
-  static List<LogEntry> get logs => List.unmodifiable(_logs);
-
-  static void log({
+  static Future<void> log({
     required String action,
     required String detail,
     String? userEmail,
-  }) {
+  }) async {
     final entry = LogEntry(
       action: action,
       detail: detail,
@@ -42,11 +39,8 @@ class LogService {
       userEmail: userEmail,
     );
 
-    // 로컬 저장
-    _logs.add(entry);
-
-    // TODO: 백엔드 연결 시 아래 주석 해제
-    // await ApiService.sendLog(entry.toJson());
+    // 백엔드로 로그 전송
+    await ApiService.sendLog(entry.toJson());
 
     // 디버그용 출력
     debugPrint('[LOG] ${entry.timestamp} | ${entry.action} | ${entry.detail}');

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/user_session.dart';
+import '../services/api_service.dart';
 
 // ───────────────────────────────────────────
 // 비밀번호 변경 페이지
@@ -17,17 +18,7 @@ class _PasswordChangePageState extends State<PasswordChangePage> {
   final TextEditingController _confirmController = TextEditingController();
   String? _errorMsg;
   String? _successMsg;
-
-  // ───────────────────────────────────────────
-  // 비밀번호 강도 검증 (영어 + 숫자 + 특수문자 + 8자 이상)
-  // ───────────────────────────────────────────
-  bool _isValidPassword(String password) {
-    if (password.length < 8) return false;
-    if (!password.contains(RegExp(r'[A-Za-z]'))) return false;
-    if (!password.contains(RegExp(r'[0-9]'))) return false;
-    if (!password.contains(RegExp(r'[*^%#$@!]'))) return false;
-    return true;
-  }
+  bool _isLoading = false;
 
   // ───────────────────────────────────────────
   // 비밀번호 강도 점수 (0~4)
@@ -41,7 +32,7 @@ class _PasswordChangePageState extends State<PasswordChangePage> {
     return score;
   }
 
-  void _submit() {
+  void _submit() async {
     final current = _currentController.text.trim();
     final newPw = _newController.text.trim();
     final confirm = _confirmController.text.trim();
@@ -50,15 +41,6 @@ class _PasswordChangePageState extends State<PasswordChangePage> {
       setState(() => _errorMsg = '모든 항목을 입력해주세요.');
       return;
     }
-
-    // 비밀번호 강도 검증
-    if (!_isValidPassword(newPw)) {
-      setState(
-        () => _errorMsg = '비밀번호는 영어, 숫자, 특수문자(*^%#\$@!)를\n포함한 8자 이상이어야 해요.',
-      );
-      return;
-    }
-
     if (newPw != confirm) {
       setState(() => _errorMsg = '새 비밀번호가 일치하지 않아요.');
       return;
@@ -67,21 +49,37 @@ class _PasswordChangePageState extends State<PasswordChangePage> {
       setState(() => _errorMsg = '현재 비밀번호와 동일해요.');
       return;
     }
-
-    final success = UserSession.changePassword(current: current, newPw: newPw);
-    if (!success) {
-      setState(() => _errorMsg = '현재 비밀번호가 올바르지 않아요.');
+    if (newPw.length < 4) {
+      setState(() => _errorMsg = '비밀번호는 4자 이상이어야 해요.');
       return;
     }
 
     setState(() {
+      _isLoading = true;
       _errorMsg = null;
-      _successMsg = '비밀번호가 변경되었어요! 😊';
     });
 
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) Navigator.pop(context);
-    });
+    try {
+      final result = await ApiService.changePassword(
+        userId: UserSession.userId!,
+        currentPassword: current,
+        newPassword: newPw,
+      );
+
+      if (result['detail'] != null) {
+        setState(() => _errorMsg = result['detail']);
+        return;
+      }
+
+      setState(() => _successMsg = '비밀번호가 변경되었어요! 😊');
+      Future.delayed(const Duration(seconds: 1), () {
+        if (mounted) Navigator.pop(context);
+      });
+    } catch (e) {
+      setState(() => _errorMsg = '서버 연결에 실패했어요. 다시 시도해주세요.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -106,8 +104,6 @@ class _PasswordChangePageState extends State<PasswordChangePage> {
           padding: const EdgeInsets.all(16),
           children: [
             const SizedBox(height: 12),
-
-            // 현재 비밀번호
             TextField(
               controller: _currentController,
               obscureText: true,
@@ -122,14 +118,12 @@ class _PasswordChangePageState extends State<PasswordChangePage> {
               ),
             ),
             const SizedBox(height: 10),
-
-            // 새 비밀번호
             TextField(
               controller: _newController,
               obscureText: true,
-              onChanged: (_) => setState(() {}), // 강도 표시 실시간 업데이트
+              onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
-                hintText: '새 비밀번호 (영어+숫자+특수문자 8자 이상)',
+                hintText: '새 비밀번호 (4자 이상)',
                 filled: true,
                 fillColor: const Color(0xFFF7F4F8),
                 border: OutlineInputBorder(
@@ -138,16 +132,11 @@ class _PasswordChangePageState extends State<PasswordChangePage> {
                 ),
               ),
             ),
-
-            // 비밀번호 강도 표시바
             if (_newController.text.isNotEmpty) ...[
               const SizedBox(height: 8),
               _buildPasswordStrengthBar(_newController.text),
             ],
-
             const SizedBox(height: 10),
-
-            // 새 비밀번호 확인
             TextField(
               controller: _confirmController,
               obscureText: true,
@@ -161,25 +150,6 @@ class _PasswordChangePageState extends State<PasswordChangePage> {
                 ),
               ),
             ),
-
-            // 비밀번호 조건 안내
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF7F4F8),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Text(
-                '비밀번호 조건\n• 8자 이상\n• 영어 포함\n• 숫자 포함\n• 특수문자 포함 (* ^ % # \$ @ !)',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Color(0xFF888888),
-                  height: 1.6,
-                ),
-              ),
-            ),
-
             if (_errorMsg != null) ...[
               const SizedBox(height: 8),
               Text(
@@ -199,25 +169,28 @@ class _PasswordChangePageState extends State<PasswordChangePage> {
               ),
             ],
             const SizedBox(height: 18),
-
-            // 변경 버튼
             GestureDetector(
-              onTap: _submit,
+              onTap: _isLoading ? null : _submit,
               child: Container(
                 height: 50,
                 decoration: BoxDecoration(
                   color: const Color(0xFFFDD835),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Center(
-                  child: Text(
-                    '변경하기',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF5D4037),
-                    ),
-                  ),
+                child: Center(
+                  child: _isLoading
+                      ? const CircularProgressIndicator(
+                          color: Color(0xFF5D4037),
+                          strokeWidth: 2,
+                        )
+                      : const Text(
+                          '변경하기',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF5D4037),
+                          ),
+                        ),
                 ),
               ),
             ),
@@ -227,17 +200,14 @@ class _PasswordChangePageState extends State<PasswordChangePage> {
     );
   }
 
-  // ───────────────────────────────────────────
-  // 비밀번호 강도 표시바 위젯
-  // ───────────────────────────────────────────
   Widget _buildPasswordStrengthBar(String pw) {
     final strength = _passwordStrength(pw);
     final colors = [
       Colors.transparent,
-      const Color(0xFFE53935), // 1 - 빨강
-      const Color(0xFFFF9800), // 2 - 주황
-      const Color(0xFFFDD835), // 3 - 노랑
-      const Color(0xFF4CAF50), // 4 - 초록
+      const Color(0xFFE53935),
+      const Color(0xFFFF9800),
+      const Color(0xFFFDD835),
+      const Color(0xFF4CAF50),
     ];
     final labels = ['', '너무 약해요', '약해요', '보통이에요', '강해요!'];
     final color = strength > 0 ? colors[strength] : colors[1];
