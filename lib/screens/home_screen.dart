@@ -9,7 +9,7 @@ import 'my_page.dart';
 import 'guide_page.dart';
 import 'category_detail_page.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
+import '../services/api_service.dart';
 
 // ───────────────────────────────────────────
 // 메인 화면 (하단 네비게이션)
@@ -98,12 +98,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _checkAiConnection() async {
-    try {
-      final response = await http.get(Uri.parse('YOUR_API_URL/health'));
-      if (mounted) setState(() => _isAiConnected = response.statusCode == 200);
-    } catch (e) {
-      if (mounted) setState(() => _isAiConnected = false);
-    }
+    final connected = await ApiService.checkConnection();
+    if (mounted) setState(() => _isAiConnected = connected);
   }
 
   void _refreshTip() {
