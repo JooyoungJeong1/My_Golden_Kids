@@ -6,85 +6,63 @@ import '../models/category.dart';
 
 const Map<String, CategoryDetail> categoryDetails = {
   '종이류': CategoryDetail(
-    subtitle: '박스·신문지·책·영수증',
+    subtitle: '박스·신문지·책·노트',
     steps: [
-      CategoryStep(title: '펼치기', description: '박스는 테이프·스티커를 제거하고 납작하게 펼쳐주세요.'),
-      CategoryStep(
-        title: '분리하기',
-        description: '코팅된 부분, 스프링, 플라스틱 커버는 따로 분리합니다.',
-      ),
-      CategoryStep(
-        title: '묶기',
-        description: '끈으로 묶거나 박스 안에 넣어 종이류 수거함에 배출합니다.',
-      ),
+      CategoryStep(title: '이물질 제거', description: '테이프·철핀·비닐코팅 부분을 제거해요.'),
+      CategoryStep(title: '펼치기', description: '물기에 젖지 않게 반듯하게 펴서 모아줘요.'),
+      CategoryStep(title: '묶어 배출', description: '차곡차곡 쌓은 뒤 끈으로 묶어 종이류로 배출해요.'),
     ],
-    warning: '영수증·코팅지·기름 묻은 종이는 일반쓰레기로 버리세요.',
+    warning: '영수증·택배전표·코팅지·종이호일은 일반쓰레기로 버려주세요.',
   ),
+
   '캔류': CategoryDetail(
-    subtitle: '음료캔·통조림·부탄가스',
+    subtitle: '음료캔·통조림캔·부탄가스',
     steps: [
-      CategoryStep(title: '비우기', description: '내용물을 완전히 비우고 물로 한 번 헹궈주세요.'),
-      CategoryStep(title: '찌그러트리기', description: '부피를 줄이기 위해 발로 밟아 찌그러트려주세요.'),
-      CategoryStep(title: '배출', description: '캔 전용 수거함 또는 금속 수거함에 넣어주세요.'),
+      CategoryStep(title: '비우기', description: '내용물을 완전히 비우고 물로 헹궈줘요.'),
+      CategoryStep(title: '분리하기', description: '플라스틱 뚜껑 등 다른 재질은 제거해줘요.'),
+      CategoryStep(title: '배출', description: '캔 전용 수거함 또는 금속류로 배출해요.'),
     ],
-    warning: '부탄가스 캔은 반드시 구멍을 뚫어 가스를 완전히 빼고 배출하세요.',
+    warning: '부탄가스는 통풍이 잘되는 곳에서 노즐을 눌러 가스를 빼고 배출해주세요.',
   ),
+
   '유리': CategoryDetail(
-    subtitle: '유리병·술병·소스병',
+    subtitle: '음료수병·술병·소스병',
     steps: [
-      CategoryStep(title: '비우기', description: '내용물을 비우고 물로 헹궈 이물질을 제거하세요.'),
-      CategoryStep(
-        title: '뚜껑 분리',
-        description: '금속 뚜껑→캔류, 플라스틱 뚜껑→플라스틱으로 분리 배출합니다.',
-      ),
-      CategoryStep(
-        title: '배출',
-        description: '유리 전용 수거함에 넣어주세요. 깨진 유리는 별도 처리하세요.',
-      ),
+      CategoryStep(title: '비우기', description: '내용물을 비우고 물로 헹궈 이물질을 제거해요.'),
+      CategoryStep(title: '분리하기', description: '뚜껑 등 다른 재질은 제거한 뒤 따로 배출해요.'),
+      CategoryStep(title: '배출', description: '깨지지 않도록 주의해 유리병 수거함에 배출해요.'),
     ],
-    warning: '깨진 유리는 신문지로 싸서 일반쓰레기 봉투에 넣어주세요. 유리 수거함에 넣으면 안 돼요.',
+    warning: '깨진 유리·도자기·내열유리는 유리병 수거함에 넣지 말아주세요.',
   ),
+
   '플라스틱': CategoryDetail(
-    subtitle: 'PET·PP·PE·PS 용기',
+    subtitle: 'PET·PE·PP·PS 용기',
     steps: [
-      CategoryStep(title: '라벨 제거', description: '비닐 라벨은 완전히 제거해주세요.'),
-      CategoryStep(title: '헹구기', description: '내용물을 비우고 물로 헹궈주세요.'),
-      CategoryStep(
-        title: '찌그러트리기',
-        description: 'PET병은 찌그러트려 뚜껑을 닫아 부피를 줄여주세요.',
-      ),
-      CategoryStep(
-        title: '배출',
-        description: '플라스틱 수거함에 배출합니다. 오염이 심하면 일반쓰레기로.',
-      ),
+      CategoryStep(title: '비우기', description: '내용물을 비우고 물로 헹궈 이물질을 제거해요.'),
+      CategoryStep(title: '분리하기', description: '라벨·부속품 등 다른 재질은 제거해줘요.'),
+      CategoryStep(title: '압착하기', description: '투명 PET병은 압착 후 뚜껑을 닫아 배출해요.'),
+      CategoryStep(title: '배출', description: '플라스틱 수거함에 배출해요.'),
     ],
-    warning: '스티로폼(발포 스티렌)은 별도 스티로폼 전용 수거함에 넣어야 합니다.',
+    warning: '오염이 심하거나 다른 재질이 붙어 있으면 일반쓰레기로 배출해주세요.',
   ),
+
   '비닐': CategoryDetail(
-    subtitle: '봉투·랩·필름·지퍼백',
+    subtitle: '비닐봉투·랩·필름',
     steps: [
-      CategoryStep(title: '내용물 제거', description: '음식물 등 이물질이 없도록 깨끗이 비워주세요.'),
-      CategoryStep(title: '분리', description: '테이프·스티커 등 이물질을 제거해주세요.'),
-      CategoryStep(title: '배출', description: '비닐 전용 수거함 또는 투명비닐봉투에 모아 배출합니다.'),
+      CategoryStep(title: '비우기', description: '내용물을 비우고 이물질을 제거해요.'),
+      CategoryStep(title: '모으기', description: '흩날리지 않도록 투명 또는 반투명 봉투에 담아줘요.'),
+      CategoryStep(title: '배출', description: '비닐류 수거함 또는 지정된 방식으로 배출해요.'),
     ],
-    warning: '오염된 비닐, 음식물 묻은 봉투는 일반쓰레기로 버리세요.',
+    warning: '음식물이 묻어 깨끗이 제거되지 않는 비닐은 일반쓰레기로 버려주세요.',
   ),
+
   '기타·처치곤란': CategoryDetail(
-    subtitle: '처치곤란·복합재질·특수품목',
+    subtitle: '복합재질·전지·전자제품',
     steps: [
-      CategoryStep(
-        title: '확인',
-        description: '재질 표시를 먼저 확인하세요. 두 가지 이상이면 복합재질입니다.',
-      ),
-      CategoryStep(
-        title: '분리 가능 여부',
-        description: '분리 가능한 부품은 각 재질별로 분리 배출합니다.',
-      ),
-      CategoryStep(
-        title: '불가 시',
-        description: '분리 불가능한 복합재질은 일반쓰레기봉투에 넣어 배출합니다.',
-      ),
+      CategoryStep(title: '재질 확인', description: '분리배출 표시와 재질을 먼저 확인해요.'),
+      CategoryStep(title: '분리하기', description: '분리 가능한 부분은 재질별로 나눠 배출해요.'),
+      CategoryStep(title: '별도 배출', description: '전지·전자제품·형광등은 전용수거함에 배출해요.'),
     ],
-    warning: '형광등·배터리·의약품·전자제품은 별도 수거함이 있어요. 일반쓰레기·재활용 수거함에 넣지 마세요.',
+    warning: '분리 불가능한 복합재질은 지자체 기준에 따라 배출해주세요.',
   ),
 };

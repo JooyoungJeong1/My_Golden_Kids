@@ -22,22 +22,23 @@ class DisposalGuidePage extends StatelessWidget {
     GuideStep(
       number: '1',
       title: '비우기',
-      description: '용기 안의 내용물을 완전히 비워주세요. 음료, 음식물 등이 남아있으면 재활용이 불가능해집니다.',
+      description:
+          '용기 안에 남아있는 내용물은 깨끗하게 비우고 배출해요. 음식물이나 음료가 남아 있으면 재활용이 어려워져요.',
     ),
     GuideStep(
       number: '2',
       title: '헹구기',
-      description: '물로 한 번 헹궈 이물질을 제거하세요. 완벽히 깨끗하지 않아도 되지만, 심한 오염은 제거해야 합니다.',
+      description: '재활용품에 묻은 이물질이나 음식물은 물로 닦거나 헹궈서 배출해요. 심한 오염은 제거해주세요.',
     ),
     GuideStep(
       number: '3',
       title: '분리하기',
-      description: '라벨, 뚜껑, 부속품 등 재질이 다른 부분은 분리해서 각각 맞는 수거함에 넣어주세요.',
+      description: '라벨·뚜껑·부속품 등 다른 재질은 분리해서 각각 알맞은 수거함에 배출해요.',
     ),
     GuideStep(
       number: '4',
       title: '섞지 않기',
-      description: '종류별로 구분해서 배출하세요. 여러 재질을 섞어 버리면 선별 과정에서 재활용이 어려워집니다.',
+      description: '종류별·재질별로 구분해 분리수거함에 배출해요. 서로 섞이면 재활용이 어려워져요.',
     ),
   ];
 

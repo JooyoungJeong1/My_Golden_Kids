@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:http_parser/http_parser.dart';
 import '../services/api_service.dart';
@@ -19,7 +20,8 @@ class _PhotoQuestionPageState extends State<PhotoQuestionPage> {
   bool _isAnalyzing = false;
   bool _showResult = false;
   String _errorMessage = '';
-  List<Map<String, dynamic>> _detectedItems = [];
+  Map<String, dynamic>? _topItem; // 신뢰도 가장 높은 1개만
+  XFile? _pickedImage;
   final ImagePicker _picker = ImagePicker();
 
   Future<void> _analyze(ImageSource source) async {
@@ -27,10 +29,11 @@ class _PhotoQuestionPageState extends State<PhotoQuestionPage> {
     if (image == null) return;
 
     setState(() {
+      _pickedImage = image;
       _isAnalyzing = true;
       _showResult = false;
       _errorMessage = '';
-      _detectedItems = [];
+      _topItem = null;
     });
 
     try {
@@ -54,20 +57,25 @@ class _PhotoQuestionPageState extends State<PhotoQuestionPage> {
       if (!mounted) return;
 
       if (data['result'] == 'unknown' || (data['items'] as List).isEmpty) {
-        // 감지 실패
         setState(() {
           _isAnalyzing = false;
           _showResult = true;
           _errorMessage = data['message'] ?? '물체를 인식하기 어려워요.';
         });
       } else {
-        // 감지 성공 - 여러 개 처리
+        // 신뢰도 가장 높은 1개만 선택
+        final items = (data['items'] as List)
+            .map((e) => Map<String, dynamic>.from(e as Map))
+            .toList();
+        items.sort(
+          (a, b) =>
+              ((b['confidence'] as num)).compareTo((a['confidence'] as num)),
+        );
+
         setState(() {
           _isAnalyzing = false;
           _showResult = true;
-          _detectedItems = (data['items'] as List)
-              .map((e) => Map<String, dynamic>.from(e as Map))
-              .toList();
+          _topItem = items.first;
         });
       }
     } catch (e) {
@@ -110,80 +118,104 @@ class _PhotoQuestionPageState extends State<PhotoQuestionPage> {
                       width: 2,
                     ),
                   ),
-                  child: _isAnalyzing
-                      ? const Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(18),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        // 업로드된 사진
+                        if (_pickedImage != null)
+                          Image.file(
+                            File(_pickedImage!.path),
+                            fit: BoxFit.cover,
+                          ),
+
+                        // 사진 없을 때 기본 UI
+                        if (_pickedImage == null)
+                          const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              CircularProgressIndicator(
-                                color: Color(0xFFFDD835),
-                                strokeWidth: 3,
+                              Icon(
+                                Icons.camera_alt_outlined,
+                                size: 40,
+                                color: Color(0xFF888888),
                               ),
-                              SizedBox(height: 12),
+                              SizedBox(height: 8),
                               Text(
-                                '분석 중...',
+                                '사진을 선택하세요',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: Color(0xFF888888),
                                 ),
                               ),
+                              SizedBox(height: 4),
+                              Text(
+                                '탭하여 업로드',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFFBBBBBB),
+                                ),
+                              ),
                             ],
                           ),
-                        )
-                      : _showResult
-                      ? Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              _errorMessage.isNotEmpty
-                                  ? Icons.error_outline_rounded
-                                  : Icons.check_circle_rounded,
-                              size: 48,
-                              color: _errorMessage.isNotEmpty
-                                  ? const Color(0xFFE53935)
-                                  : const Color(0xFF4CAF50),
+
+                        // 분석 중 오버레이
+                        if (_isAnalyzing)
+                          Container(
+                            color: Colors.black.withValues(alpha: 0.45),
+                            child: const Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                CircularProgressIndicator(
+                                  color: Color(0xFFFDD835),
+                                  strokeWidth: 3,
+                                ),
+                                SizedBox(height: 12),
+                                Text(
+                                  '분석 중...',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              _errorMessage.isNotEmpty ? '인식 실패' : '분석 완료!',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: _errorMessage.isNotEmpty
-                                    ? const Color(0xFFE53935)
-                                    : const Color(0xFF2E7D32),
+                          ),
+
+                        // 분석 완료/실패 오버레이 (잠깐 표시)
+                        if (_showResult && !_isAnalyzing)
+                          Positioned(
+                            bottom: 10,
+                            left: 0,
+                            right: 0,
+                            child: Center(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _errorMessage.isNotEmpty
+                                      ? const Color(0xFFE53935)
+                                      : const Color(0xFF4CAF50),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  _errorMessage.isNotEmpty ? '인식 실패' : '분석 완료!',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
                               ),
                             ),
-                          ],
-                        )
-                      : const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.camera_alt_outlined,
-                              size: 40,
-                              color: Color(0xFF888888),
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              '사진을 선택하세요',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF888888),
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              '탭하여 업로드',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFFBBBBBB),
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -274,94 +306,64 @@ class _PhotoQuestionPageState extends State<PhotoQuestionPage> {
                     ),
                   ),
 
-                // 감지 성공 - 여러 개 표시
-                if (_detectedItems.isNotEmpty)
-                  ..._detectedItems.map(
-                    (item) => Container(
-                      width: double.infinity,
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE8F5E9),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFC8E6C9)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Text(
-                                '🔍 AI 분석 결과',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF2E7D32),
-                                ),
+                // 감지 성공 - 신뢰도 1위만 표시
+                if (_topItem != null)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8F5E9),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFC8E6C9)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '🔍 AI 분석 결과',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF2E7D32),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _topItem!['name'] ?? '',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF222222),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          _topItem!['steps'] ?? '',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF444444),
+                            height: 1.6,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 6,
+                          children: ((_topItem!['badges'] as List?) ?? []).map((
+                            b,
+                          ) {
+                            final badge = Map<String, String>.from(b as Map);
+                            return _buildBadge(
+                              badge['label']!,
+                              Color(
+                                int.parse('FF${badge['bgColor']}', radix: 16),
                               ),
-                              const Spacer(),
-                              // 신뢰도 표시
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF4CAF50),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  '${item['confidence']}%',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                  ),
-                                ),
+                              Color(
+                                int.parse('FF${badge['textColor']}', radix: 16),
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            item['name'] ?? '',
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF222222),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            item['steps'] ?? '',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFF444444),
-                              height: 1.6,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Wrap(
-                            spacing: 6,
-                            children: ((item['badges'] as List?) ?? []).map((
-                              b,
-                            ) {
-                              final badge = Map<String, String>.from(b as Map);
-                              return _buildBadge(
-                                badge['label']!,
-                                Color(
-                                  int.parse('FF${badge['bgColor']}', radix: 16),
-                                ),
-                                Color(
-                                  int.parse(
-                                    'FF${badge['textColor']}',
-                                    radix: 16,
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ],
-                      ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
                     ),
                   ),
               ],

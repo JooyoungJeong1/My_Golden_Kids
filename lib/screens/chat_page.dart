@@ -3,6 +3,7 @@ import '../widgets/typing_indicator.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../services/api_service.dart';
+import '../data/faq_data.dart';
 
 // ───────────────────────────────────────────
 // 채팅 페이지
@@ -13,37 +14,6 @@ class _ChatItem {
   final bool isMe;
   const _ChatItem({required this.text, required this.isMe});
 }
-
-// FAQ 데이터 (자주 묻는 질문)
-const List<Map<String, String>> _faqList = [
-  {
-    'q': '플라스틱은 모두 재활용 가능한가요?',
-    'a':
-        '오염이 심하거나 복합 재질(플라스틱+금속 등)이면 일반쓰레기로 분류됩니다.\n용기에 표시된 재질 마크를 확인하고, 깨끗이 씻어 배출하세요.',
-  },
-  {
-    'q': '음식물이 묻은 종이는?',
-    'a': '피자 박스처럼 기름이 심하게 밴 종이는 일반쓰레기입니다.\n약간 묻은 경우 오염 부분을 제거 후 배출 가능합니다.',
-  },
-  {
-    'q': '유리병 뚜껑은 어떻게 버려요?',
-    'a': '금속 뚜껑은 캔류로, 플라스틱 뚜껑은 플라스틱으로 분리해서 배출합니다.\n유리병 본체는 유리 수거함에 따로 넣어주세요.',
-  },
-  {
-    'q': '영수증(감열지)은 어디에 버려요?',
-    'a': '영수증, 택배 송장, 코팅지는 일반쓰레기입니다.\n재활용 표시가 있어도 감열 처리된 종이는 재활용이 안 됩니다.',
-  },
-  {
-    'q': '깨진 유리는 어떻게 버려요?',
-    'a':
-        '신문지나 종이로 단단히 싸서 \'깨진 유리\'라고 표시 후\n일반쓰레기 봉투에 넣어 배출하세요.\n\n⚠️ 유리 수거함에 넣으면 안 돼요!',
-  },
-  {
-    'q': '건전지·배터리는 어디에 버려요?',
-    'a':
-        '폐건전지 전용 수거함에 배출해요! 🔋\n\n대형마트, 주민센터, 아파트 단지 등에 있어요.\n충전식 배터리(리튬이온)는 전자제품 매장 수거함에 배출하세요.\n\n🚨 일반쓰레기로 버리면 화재 위험!',
-  },
-];
 
 // 키워드 → 카테고리 매핑
 const Map<String, String> _keywordMap = {
@@ -260,12 +230,11 @@ class _ChatQuestionPageState extends State<ChatQuestionPage> {
   List<Map<String, String>> _currentFollowUps = [];
   String? _lastCategory;
 
-  // FAQ 모드 빌드
   String _buildFaqMenu() {
     final buffer = StringBuffer();
     buffer.writeln('자주 묻는 질문이에요! ❓\n');
-    for (int i = 0; i < _faqList.length; i++) {
-      buffer.writeln('${i + 1}. ${_faqList[i]['q']}');
+    for (int i = 0; i < faqList.length; i++) {
+      buffer.writeln('${i + 1}. ${faqList[i]['q']}');
     }
     buffer.writeln('\n번호를 입력하면 답변을 알려드려요!');
     return buffer.toString();
@@ -306,11 +275,11 @@ class _ChatQuestionPageState extends State<ChatQuestionPage> {
     String reply = '';
     List<Map<String, String>> followUps = [];
 
-    // FAQ 번호 입력 체크 (1~6)
+    // FAQ 번호 입력 체크
     final trimmed = text.trim().replaceAll(RegExp(r'[^0-9]'), '');
     final faqNum = trimmed.isNotEmpty ? int.tryParse(trimmed) : null;
-    if (faqNum != null && faqNum >= 1 && faqNum <= _faqList.length) {
-      final faq = _faqList[faqNum - 1];
+    if (faqNum != null && faqNum >= 1 && faqNum <= faqList.length) {
+      final faq = faqList[faqNum - 1];
       reply = '❓ ${faq['q']}\n\n${faq['a']}';
       _lastCategory = null;
       followUps = [
@@ -358,7 +327,6 @@ class _ChatQuestionPageState extends State<ChatQuestionPage> {
           {'q': '건전지는요?', 'a': ''},
         ];
       } else {
-        // 모르는 질문은 Claude API 호출
         try {
           final base = await ApiService.getBaseUrl();
           final response = await http.post(
@@ -389,7 +357,6 @@ class _ChatQuestionPageState extends State<ChatQuestionPage> {
 
   void _onFollowUpTap(Map<String, String> item) {
     if (item['q'] == '❓ 자주 묻는 질문') {
-      // FAQ 메뉴 표시
       setState(() {
         _messages.add(const _ChatItem(text: '❓ 자주 묻는 질문', isMe: true));
         _isTyping = true;

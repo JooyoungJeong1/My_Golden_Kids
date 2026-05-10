@@ -21,7 +21,15 @@ class BuriljiMaljiApp extends StatelessWidget {
           surface: const Color(0xFFF6F1F6), // 앱바 배경색
         ),
       ),
-      home: const MainScreen(),
+      home: Scaffold(
+        backgroundColor: const Color(0xFFEEEEEE), // 양쪽 여백 배경색
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 430), // 폰 사이즈 제한
+            child: const MainScreen(),
+          ),
+        ),
+      ),
     );
   }
 }

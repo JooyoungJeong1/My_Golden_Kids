@@ -8,7 +8,6 @@ import 'community_page.dart';
 import 'my_page.dart';
 import 'guide_page.dart';
 import 'category_detail_page.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../services/api_service.dart';
 
 // ───────────────────────────────────────────
@@ -78,12 +77,52 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isAiConnected = false;
 
   static final List<String> _tips = [
-    '페트병은 라벨 제거 후 찌그러트려서 배출하면 더 많이 재활용돼요!',
+    '페트병은 라벨을 떼고 압축해 배출해요!',
+    '배달 플라스틱 용기는 헹군 뒤 물기 빼고 배출해요!',
+    '샴푸통은 내용물을 비우고 헹궈 배출해요!',
+    '요거트 용기는 비닐을 떼고 헹궈 배출해요!',
+    '빨대는 재활용이 어려워 종량제봉투에 버려요!',
+    '투명 페트병은 전용 수거함에 따로 넣어요!',
+
+    '과자 봉지는 내용물을 비우고 비닐로 배출해요!',
+    '에어캡(뽁뽁이)은 테이프를 떼고 비닐로 배출해요!',
+    '일회용 비닐은 내용물 털어 비닐로 분리해요!',
+
+    '유리병은 뚜껑과 라벨을 떼고 헹궈 배출해요!',
+    '색깔별 수거함이 있으면 유리병도 색깔별로 배출해요!',
+    '깨진 유리는 신문지에 싸서 종량제봉투에 버려요!',
+    '내열유리 식기는 유리류로 재활용 안 돼요!',
+
+    '음료 캔은 비우고 헹궈 압축해 배출해요!',
+    '통조림 캔은 뚜껑 날에 주의해요!',
+    '통조림 캔 뚜껑은 안으로 접어 배출해요!',
+    '부탄가스는 가스 제거 후 캔류로 배출해요!',
+    '에어로졸 캔은 가스 제거 후 캔류로 배출해요!',
+    '기름 묻은 캔은 닦고 헹궈 배출해요!',
+    '캔류는 유리와 섞지 말고 따로 배출해요!',
+
+    '종이팩은 펼쳐 말린 뒤 접어 배출해요!',
+    '영수증은 종량제봉투에 버려요!',
+    '피자박스는 기름 묻은 부분만 버려요!',
+    '택배상자는 테이프·전표 떼고 접어 배출해요!',
+    '휴지·티슈는 종량제봉투에 버려요!',
+    '책·노트는 스프링 빼고 종이류로 배출해요!',
+    '종이쇼핑백은 끈을 떼고 종이류로 배출해요!',
     '우유팩은 종이류가 아닌 전용 수거함에 따로 배출해야 해요!',
-    '비닐 라벨이 붙은 유리병은 라벨을 먼저 제거한 뒤 배출하세요!',
-    '오염된 비닐은 재활용이 안돼요! 깨끗한 것만 비닐류로 배출하세요!',
+
+    '형광등은 깨지지 않게 전용수거함에 배출해요!',
+    '재활용품은 비우고 헹구는 게 기본이에요!',
+    '재질이 헷갈리면 재활용 표시 마크를 확인해요!',
+    '하루 하나라도 꾸준히 실천하면 큰 변화예요!',
+    '장볼 때 장바구니 챙겨 비닐 사용 줄여봐요!',
+    '텀블러 사용으로 일회용 컵을 대신해봐요!',
+    '포장 적은 제품을 골라 쓰레기량 줄여봐요!',
+    '필요 없는 빨대·일회용 수저는 거절해요!',
+    '동네 분리배출 요일과 기준을 미리 확인해요!',
+    '재활용품은 젖지 않게 말려서 배출해요!',
+    '집에 분리수거 구역을 따로 만들어 두세요!',
+    '헌옷은 깨끗할 때만 수거함에 넣어주세요!',
     '스티로폼은 스티로폼 전용 수거함에 넣어야 해요!',
-    '깨진 유리는 신문지로 싸서 일반쓰레기봉투에 넣어주세요!',
     '건전지와 형광등은 각각 전용 수거함이 따로 있어요!',
   ]; //오늘의 팁 문구
 
@@ -156,15 +195,8 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: const Color(0xFFF6F1F6),
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        centerTitle: false,
-        title: Text(
-          '버릴래말래',
-          style: GoogleFonts.notoSans(
-            color: const Color(0xFF222222),
-            fontWeight: FontWeight.w800,
-            fontSize: 25,
-          ),
-        ),
+        centerTitle: true,
+        title: Image.asset('assets/images/앱로고.png', height: 60),
         actions: [
           GestureDetector(
             onTap: () async {
@@ -426,8 +458,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildTodayTip() {
     return Container(
-      height: 84,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      height: 65,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
         color: const Color(0xFFE8F5E9),
         borderRadius: BorderRadius.circular(16),
@@ -477,11 +509,13 @@ class _HomeScreenState extends State<HomeScreen> {
         _refreshTip();
       },
       child: Container(
+        height: 65,
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: const Color(0xFFEDE7F6),
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color.fromARGB(255, 219, 199, 249)),
         ),
         child: const Row(
           children: [
