@@ -19,8 +19,8 @@ class ApiService {
     if (_cachedBaseUrl != null) return _cachedBaseUrl!;
 
     final candidates = [
-      'http://10.0.2.2:8000', // 안드로이드 에뮬레이터
       'http://211.104.25.94:8000', // 배포 서버
+      'http://10.0.2.2:8000', // 안드로이드 에뮬레이터
     ];
 
     for (final url in candidates) {
