@@ -22,7 +22,7 @@
 
 ### 💬 AI 채팅
 - 품목명 입력 시 분리배출 방법 안내
-- 키워드 기반 빠른 답변 (하드코딩 FAQ)
+- 키워드 기반 빠른 답변
 - 모르는 품목은 Claude API로 자동 연결
 - 꼬리질문 버튼으로 추가 정보 제공
 
@@ -53,14 +53,11 @@
 - 앱 실행 후 첫 API 호출 시 자동으로 서버 탐색
 - 안드로이드 에뮬레이터 → 배포 서버 순서로 탐색
 - 찾은 서버 주소를 캐싱하여 이후 API 호출에 재사용
+- 탐색 우선순위 
+    1. http://10.0.2.2:8000        // 안드로이드 에뮬레이터
+    2. http://211.104.25.94:8000   // 배포 서버
 
-```dart
-// 탐색 우선순위
-'http://10.0.2.2:8000'       // 안드로이드 에뮬레이터
-'http://211.104.25.94:8000'  // 배포 서버
-```
-
----
+    ---
 
 ## 시작하기
 
@@ -114,20 +111,39 @@ lib/
 
 ## API 목록
 
+### 인증
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
 | POST | /auth/signup | 회원가입 |
 | POST | /auth/login | 로그인 |
-| PATCH | /auth/nickname | 닉네임 변경 |
+| PATCH | /auth/nickname | 닉네임 변경 (7일 제한) |
 | PATCH | /auth/password | 비밀번호 변경 |
 | PATCH | /auth/profile-emoji | 프로필 이모지 변경 |
-| GET | /community/posts | 게시글 목록 |
+
+### 커뮤니티
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| GET | /community/posts | 게시글 목록 조회 |
 | POST | /community/posts | 게시글 작성 |
 | DELETE | /community/posts/{id} | 게시글 삭제 |
 | POST | /community/posts/{id}/comments | 댓글 작성 |
 | POST | /community/posts/{id}/like | 좋아요 토글 |
 | POST | /community/posts/{id}/report | 신고 |
-| GET | /community/posts/my | 내가 쓴 글 |
-| GET | /community/comments/my | 내가 쓴 댓글 |
-| POST | /photo/analyze | 사진 분석 |
-| POST | /logs | 로그 저장 |
+| GET | /community/posts/my | 내가 쓴 글 조회 |
+| GET | /community/comments/my | 내가 쓴 댓글 조회 |
+
+### 사진 분석
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| POST | /photo/analyze | 사진 업로드 → YOLO 분석 |
+
+### 채팅
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| GET | /chat | AI 채팅 (Claude API 연동) |
+
+### 로그 & 문의
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| POST | /logs | 사용자 행동 로그 저장 |
+| POST | /logs | 문의하기 저장 (action: inquiry) |
