@@ -18,23 +18,22 @@ class ApiService {
   static Future<String> getBaseUrl() async {
     if (_cachedBaseUrl != null) return _cachedBaseUrl!;
 
-    final candidates = [
-      'http://211.104.25.94:8000', // 배포 서버
-      'http://10.0.2.2:8000', // 안드로이드 에뮬레이터
-    ];
+    final candidates = ['http://211.104.25.94:8000', 'http://10.0.2.2:8000'];
 
-    for (final url in candidates) {
-      try {
-        final res = await http
-            .get(Uri.parse('$url/docs'))
-            .timeout(const Duration(seconds: 2));
-        if (res.statusCode == 200) {
-          _cachedBaseUrl = url;
-          return url;
-        }
-      } catch (_) {}
+    // 동시에 요청 → 먼저 성공한 것 사용
+    final futures = candidates.map((url) async {
+      final res = await http
+          .get(Uri.parse('$url/docs'))
+          .timeout(const Duration(seconds: 2));
+      if (res.statusCode == 200) return url;
+      throw Exception('failed');
+    });
+
+    try {
+      _cachedBaseUrl = await Future.any(futures);
+    } catch (_) {
+      _cachedBaseUrl = 'http://211.104.25.94:8000';
     }
-    _cachedBaseUrl = 'http://211.104.25.94:8000';
     return _cachedBaseUrl!;
   }
 
