@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
+import 'package:flutter/services.dart';
+import 'screens/splash_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await rootBundle.load('assets/images/앱로딩.png');
   runApp(const BuriljiMaljiApp());
 }
 
@@ -21,15 +24,7 @@ class BuriljiMaljiApp extends StatelessWidget {
           surface: const Color(0xFFF6F1F6), // 앱바 배경색
         ),
       ),
-      home: Scaffold(
-        backgroundColor: const Color(0xFFEEEEEE), // 양쪽 여백 배경색
-        body: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 430), // 폰 사이즈 제한
-            child: const MainScreen(),
-          ),
-        ),
-      ),
+      home: const SplashScreen(),
     );
   }
 }

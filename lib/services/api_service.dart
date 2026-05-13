@@ -20,7 +20,6 @@ class ApiService {
 
     final candidates = ['http://211.104.25.94:8000', 'http://10.0.2.2:8000'];
 
-    // 동시에 요청 → 먼저 성공한 것 사용
     final futures = candidates.map((url) async {
       final res = await http
           .get(Uri.parse('$url/docs'))
