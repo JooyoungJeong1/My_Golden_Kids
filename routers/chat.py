@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 import httpx
 import os
 import csv
@@ -12,11 +12,10 @@ router = APIRouter(prefix="/chat", tags=["채팅"])
 
 API_KEY = os.getenv("ANTHROPIC_API_KEY")
 
-# 서버 시작 시 CSV 1회 로드
 DISPOSAL_DATA = []
 
 def load_csv():
-    csv_path = os.path.join(os.path.dirname(__file__), "rules.csv")
+    csv_path = os.path.join(os.path.dirname(__file__), '..', 'rules.csv')
     if not os.path.exists(csv_path):
         print("[경고] 분리배출기준.csv 파일을 찾을 수 없어요.")
         return
@@ -29,7 +28,6 @@ def load_csv():
 load_csv()
 
 
-# 질문과 관련된 CSV 항목 검색
 def search_disposal(query: str) -> str:
     if not DISPOSAL_DATA:
         return ""
@@ -42,8 +40,7 @@ def search_disposal(query: str) -> str:
             row.get("클래스명", "") +
             row.get("품목예시", "") +
             row.get("배출방법", "") +
-            row.get("주의사항", "") +
-            row.get("배출불가항목", "")
+            row.get("주의사항", "")
         ).replace(" ", "").lower()
 
         if any(kw in searchable for kw in keywords):
@@ -53,7 +50,7 @@ def search_disposal(query: str) -> str:
         return ""
 
     result = []
-    for row in matched[:3]:  # 최대 3개 항목만
+    for row in matched[:3]:
         result.append(
             f"[{row['클래스명']}]\n"
             f"품목예시: {row['품목예시']}\n"
@@ -64,26 +61,29 @@ def search_disposal(query: str) -> str:
     return "\n\n".join(result)
 
 
-# 요청 스키마
 class ChatMessage(BaseModel):
-    role: str       # "user" 또는 "assistant"
+    role: str
     content: str
 
 class ChatRequest(BaseModel):
-    messages: List[ChatMessage]  # 전체 대화 히스토리
+    messages: List[ChatMessage]
 
 
-# 채팅 API
 @router.post("")
-async def chat(req: ChatRequest):
-    # 마지막 유저 메시지로 CSV 검색
-    last_user_msg = next(
-        (m.content for m in reversed(req.messages) if m.role == "user"), ""
-    )
+async def chat(req: Optional[ChatRequest] = None, message: Optional[str] = None):
+    if req:
+        last_user_msg = next(
+            (m.content for m in reversed(req.messages) if m.role == "user"), ""
+        )
+        messages = [{"role": m.role, "content": m.content} for m in req.messages]
+    else:
+        last_user_msg = message or ""
+        messages = [{"role": "user", "content": last_user_msg}]
+
     context = search_disposal(last_user_msg)
 
-    # 시스템 프롬프트에 CSV 컨텍스트 추가
     system_prompt = "당신은 분리배출 전문 도우미입니다. 친절하고 간결하게 한국어로 답변하세요."
+    system_prompt += "\n\n위 기준에 없는 품목은 일반적인 분리배출 상식과 재질을 바탕으로 자유롭게 답변하세요."
     if context:
         system_prompt += f"\n\n아래는 관련 분리배출 기준입니다. 이 내용을 우선적으로 참고하여 답변하세요:\n\n{context}"
 
@@ -99,7 +99,7 @@ async def chat(req: ChatRequest):
                 "model": "claude-haiku-4-5-20251001",
                 "max_tokens": 1024,
                 "system": system_prompt,
-                "messages": [{"role": m.role, "content": m.content} for m in req.messages],
+                "messages": messages,
             },
             timeout=30.0,
         )
