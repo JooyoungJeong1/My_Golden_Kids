@@ -4,9 +4,7 @@ from datetime import datetime
 from database import Base
 
 
-# ─────────────────────────
 # 유저
-# ─────────────────────────
 class User(Base):
     __tablename__ = "users"
 
@@ -23,9 +21,7 @@ class User(Base):
     logs = relationship("Log", back_populates="user")
 
 
-# ─────────────────────────
 # 게시글
-# ─────────────────────────
 class Post(Base):
     __tablename__ = "posts"
 
@@ -45,9 +41,7 @@ class Post(Base):
     reports = relationship("Report", back_populates="post")
 
 
-# ─────────────────────────
 # 댓글
-# ─────────────────────────
 class Comment(Base):
     __tablename__ = "comments"
 
@@ -63,9 +57,7 @@ class Comment(Base):
     author = relationship("User", back_populates="comments")
 
 
-# ─────────────────────────
 # 좋아요
-# ─────────────────────────
 class Like(Base):
     __tablename__ = "likes"
 
@@ -75,9 +67,7 @@ class Like(Base):
     session_id = Column(String(100), nullable=True)
 
 
-# ─────────────────────────
 # 신고
-# ─────────────────────────
 class Report(Base):
     __tablename__ = "reports"
 
@@ -89,9 +79,7 @@ class Report(Base):
     post = relationship("Post", back_populates="reports")
 
 
-# ─────────────────────────
 # 로그 (사용자 행동 기록)
-# ─────────────────────────
 class Log(Base):
     __tablename__ = "logs"
 

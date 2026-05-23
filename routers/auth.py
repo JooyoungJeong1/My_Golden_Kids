@@ -10,9 +10,7 @@ router = APIRouter(prefix="/auth", tags=["인증"])
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-# ─────────────────────────
 # 요청/응답 스키마
-# ─────────────────────────
 class SignupRequest(BaseModel):
     email: str
     nickname: str
@@ -29,9 +27,7 @@ class UserResponse(BaseModel):
     profile_emoji: str
 
 
-# ─────────────────────────
 # 회원가입
-# ─────────────────────────
 @router.post("/signup", response_model=UserResponse)
 def signup(req: SignupRequest, db: Session = Depends(get_db)):
     if db.query(User).filter(User.email == req.email).first():
@@ -49,9 +45,7 @@ def signup(req: SignupRequest, db: Session = Depends(get_db)):
     return user
 
 
-# ─────────────────────────
 # 로그인
-# ─────────────────────────
 @router.post("/login", response_model=UserResponse)
 def login(req: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == req.email).first()
@@ -65,9 +59,7 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
     return user
 
 
-# ─────────────────────────
 # 닉네임 변경
-# ─────────────────────────
 class NicknameChangeRequest(BaseModel):
     user_id: int
     new_nickname: str
@@ -94,9 +86,7 @@ def change_nickname(req: NicknameChangeRequest, db: Session = Depends(get_db)):
     return {"message": "닉네임이 변경되었어요!", "nickname": user.nickname}
 
 
-# ─────────────────────────
 # 비밀번호 변경
-# ─────────────────────────
 class PasswordChangeRequest(BaseModel):
     user_id: int
     current_password: str
@@ -117,9 +107,7 @@ def change_password(req: PasswordChangeRequest, db: Session = Depends(get_db)):
     return {"message": "비밀번호가 변경되었어요!"}
 
 
-# ─────────────────────────
 # 프로필 이모지 변경
-# ─────────────────────────
 class ProfileEmojiRequest(BaseModel):
     user_id: int
     emoji: str

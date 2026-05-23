@@ -4,10 +4,7 @@ from database import engine
 from models.tables import Base
 from routers import auth, community, photo, logs, chat
 
-# ─────────────────────────
 # DB 테이블 자동 생성
-# (서버 시작 시 테이블 없으면 자동으로 만들어줌)
-# ─────────────────────────
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
