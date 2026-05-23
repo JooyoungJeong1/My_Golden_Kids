@@ -38,6 +38,7 @@ def get_posts(db: Session = Depends(get_db)):
         result.append({
             "id": p.id,
             "author": p.author_nickname,
+            "user_id": p.user_id,
             "session_id": p.session_id,
             "title": p.title,
             "content": p.content,
@@ -73,6 +74,57 @@ def create_post(req: PostCreate, db: Session = Depends(get_db)):
     return {"message": "게시글이 등록되었어요!", "post_id": post.id}
 
 
+# 내가 쓴 글 목록 조회
+@router.get("/posts/my")
+def get_my_posts(user_id: Optional[int] = None, session_id: Optional[str] = None, db: Session = Depends(get_db)):
+    query = db.query(Post).filter(Post.is_hidden == False).options(joinedload(Post.comments))
+    if user_id:
+        query = query.filter(Post.user_id == user_id)
+    elif session_id:
+        query = query.filter(Post.session_id == session_id)
+    posts = query.order_by(Post.created_at.desc()).all()
+    return [
+        {
+            "id": p.id,
+            "author": p.author_nickname,
+            "title": p.title,
+            "content": p.content,
+            "likes": p.likes,
+            "comments": [
+            {
+                "id": c.id,
+                "author": c.author_nickname,
+                "content": c.content,
+                "created_at": c.created_at.isoformat(),
+            }
+            for c in p.comments
+        ],
+            "created_at": p.created_at.isoformat(),
+        }
+        for p in posts
+    ]
+
+
+# 내가 쓴 댓글 목록 조회
+@router.get("/comments/my")
+def get_my_comments(user_id: Optional[int] = None, session_id: Optional[str] = None, db: Session = Depends(get_db)):
+    query = db.query(Comment)
+    if user_id:
+        query = query.filter(Comment.user_id == user_id)
+    elif session_id:
+        query = query.filter(Comment.session_id == session_id)
+    comments = query.order_by(Comment.created_at.desc()).all()
+    return [
+        {
+            "id": c.id,
+            "post_id": c.post_id,
+            "content": c.content,
+            "created_at": c.created_at.isoformat(),
+        }
+        for c in comments
+    ]
+
+
 # 게시글 삭제
 @router.delete("/posts/{post_id}")
 def delete_post(post_id: int, session_id: Optional[str] = None, user_id: Optional[int] = None, db: Session = Depends(get_db)):
@@ -84,6 +136,10 @@ def delete_post(post_id: int, session_id: Optional[str] = None, user_id: Optiona
     is_owner = (user_id and post.user_id == user_id) or (session_id and post.session_id == session_id)
     if not is_owner:
         raise HTTPException(status_code=403, detail="본인 글만 삭제할 수 있어요.")
+
+    db.query(Comment).filter(Comment.post_id == post_id).delete()
+    db.query(Like).filter(Like.post_id == post_id).delete()
+    db.query(Report).filter(Report.post_id == post_id).delete()
 
     db.delete(post)
     db.commit()
@@ -160,48 +216,7 @@ def report_post(post_id: int, req: ReportRequest, db: Session = Depends(get_db))
     db.add(Report(post_id=post_id, reporter_email=req.reporter_email))
     post.report_count += 1
     if post.report_count >= 3:
-        post.is_hidden = True 
+        post.is_hidden = True
     db.commit()
 
     return {"message": "신고가 접수되었어요.", "report_count": post.report_count}
-
-
-# 내가 쓴 글 목록 조회
-@router.get("/posts/my")
-def get_my_posts(user_id: Optional[int] = None, session_id: Optional[str] = None, db: Session = Depends(get_db)):
-    query = db.query(Post).filter(Post.is_hidden == False)
-    if user_id:
-        query = query.filter(Post.user_id == user_id)
-    elif session_id:
-        query = query.filter(Post.session_id == session_id)
-    posts = query.order_by(Post.created_at.desc()).all()
-    return [
-        {
-            "id": p.id,
-            "title": p.title,
-            "content": p.content,
-            "likes": p.likes,
-            "created_at": p.created_at.isoformat(),
-        }
-        for p in posts
-    ]
-
-
-# 내가 쓴 댓글 목록 조회
-@router.get("/comments/my")
-def get_my_comments(user_id: Optional[int] = None, session_id: Optional[str] = None, db: Session = Depends(get_db)):
-    query = db.query(Comment)
-    if user_id:
-        query = query.filter(Comment.user_id == user_id)
-    elif session_id:
-        query = query.filter(Comment.session_id == session_id)
-    comments = query.order_by(Comment.created_at.desc()).all()
-    return [
-        {
-            "id": c.id,
-            "post_id": c.post_id,
-            "content": c.content,
-            "created_at": c.created_at.isoformat(),
-        }
-        for c in comments
-    ]
