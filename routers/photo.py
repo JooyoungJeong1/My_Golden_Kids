@@ -1,6 +1,10 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from PIL import Image
 import io
+import base64
+import httpx
+import os
+from dotenv import load_dotenv
 
 router = APIRouter(prefix="/photo", tags=["사진 분석"])
 
@@ -85,6 +89,45 @@ LABEL_MAP = {
     },
 }
 
+async def analyze_ai(base64_image: str, media_type: str = "image/jpeg") -> dict:
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://api.anthropic.com/v1/messages",
+                headers={
+                    "x-api-key": os.getenv("ANTHROPIC_API_KEY"),
+                    "anthropic-version": "2023-06-01",
+                    "content-type": "application/json",
+                },
+                json={
+                    "model": "claude-haiku-4-5-20251001",
+                    "max_tokens": 256,
+                    "messages": [{
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "image",
+                                "source": {
+                                    "type": "base64",
+                                    "media_type": media_type,
+                                    "data": base64_image
+                                }
+                            },
+                            {
+                                "type": "text",
+                                "text": "이 이미지를 분석해서 JSON으로만 답해줘. 다른 말은 하지마.\n{\"contamination\": true or false, \"multi_packaging\": true or false}\ncontamination: 이물질(음식물, 오염물) 있으면 true\nmulti_packaging: 다중포장재(여러 재질 혼합) 이면 true"
+                            }
+                        ]
+                    }]
+                },
+                timeout=30.0,
+            )
+            data = response.json()
+            text = data["content"][0]["text"]
+            import json
+            return json.loads(text)
+    except Exception:
+        return {"contamination": False, "multi_packaging": False}
 
 @router.post("/analyze")
 async def analyze_photo(file: UploadFile = File(...)):
@@ -121,8 +164,14 @@ async def analyze_photo(file: UploadFile = File(...)):
             "message": "물체를 인식하기 어려워요. 더 가까이서 찍거나 채팅으로 물어보세요!",
             "items": [],
         }
+    
+    # AI로 이물질/다중포장재 분석
+    base64_image = base64.b64encode(image_bytes).decode('utf-8')
+    ai_result = await analyze_ai(base64_image, file.content_type)
 
     return {
         "result": "success",
         "items": detected,
+        "contamination": ai_result.get("contamination", False),
+        "multi_packaging": ai_result.get("multi_packaging", False),
     }
