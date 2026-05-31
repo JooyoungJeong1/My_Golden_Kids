@@ -18,7 +18,7 @@ class ApiService {
   static Future<String> getBaseUrl() async {
     if (_cachedBaseUrl != null) return _cachedBaseUrl!;
 
-    final candidates = ['http://211.104.25.94:8000', 'http://10.0.2.2:8000'];
+    final candidates = ['http://219.248.12.141:8000', 'http://10.0.2.2:8000'];
 
     final futures = candidates.map((url) async {
       final res = await http
@@ -31,7 +31,7 @@ class ApiService {
     try {
       _cachedBaseUrl = await Future.any(futures);
     } catch (_) {
-      _cachedBaseUrl = 'http://211.104.25.94:8000';
+      _cachedBaseUrl = 'http://219.248.12.141:8000';
     }
     return _cachedBaseUrl!;
   }

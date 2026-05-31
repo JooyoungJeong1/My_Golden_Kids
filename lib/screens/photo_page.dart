@@ -24,6 +24,10 @@ class _PhotoQuestionPageState extends State<PhotoQuestionPage> {
   XFile? _pickedImage;
   final ImagePicker _picker = ImagePicker();
 
+  // 추가: 이물질/다중포장재 여부
+  bool? _contamination;
+  bool? _multiPackaging;
+
   Future<void> _analyze(ImageSource source) async {
     final XFile? image = await _picker.pickImage(source: source);
     if (image == null) return;
@@ -34,6 +38,8 @@ class _PhotoQuestionPageState extends State<PhotoQuestionPage> {
       _showResult = false;
       _errorMessage = '';
       _topItem = null;
+      _contamination = null;
+      _multiPackaging = null;
     });
 
     try {
@@ -61,6 +67,8 @@ class _PhotoQuestionPageState extends State<PhotoQuestionPage> {
           _isAnalyzing = false;
           _showResult = true;
           _errorMessage = data['message'] ?? '물체를 인식하기 어려워요.';
+          _contamination = null;
+          _multiPackaging = null;
         });
       } else {
         // 신뢰도 가장 높은 1개만 선택
@@ -76,6 +84,9 @@ class _PhotoQuestionPageState extends State<PhotoQuestionPage> {
           _isAnalyzing = false;
           _showResult = true;
           _topItem = items.first;
+          // 최상위 필드에서 이물질/다중포장재 파싱
+          _contamination = data['contamination'] == true;
+          _multiPackaging = data['multi_packaging'] == true;
         });
       }
     } catch (e) {
@@ -84,6 +95,8 @@ class _PhotoQuestionPageState extends State<PhotoQuestionPage> {
         _isAnalyzing = false;
         _showResult = true;
         _errorMessage = '서버 연결에 실패했어요. 다시 시도해주세요.';
+        _contamination = null;
+        _multiPackaging = null;
       });
     }
   }
@@ -363,6 +376,78 @@ class _PhotoQuestionPageState extends State<PhotoQuestionPage> {
                             );
                           }).toList(),
                         ),
+
+                        // 구분선
+                        const SizedBox(height: 12),
+                        const Divider(height: 1, color: Color(0xFFB2DFDB)),
+                        const SizedBox(height: 12),
+
+                        // 다중포장재 여부
+                        Row(
+                          children: [
+                            const Text(
+                              '📦 다중포장재',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF333333),
+                              ),
+                            ),
+                            const Spacer(),
+                            _buildStatusChip(
+                              _multiPackaging ?? false,
+                              trueLabel: '해당',
+                              falseLabel: '해당 없음',
+                              dangerIfTrue: false,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+
+                        // 이물질 여부
+                        Row(
+                          children: [
+                            const Text(
+                              '🔬 이물질',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF333333),
+                              ),
+                            ),
+                            const Spacer(),
+                            _buildStatusChip(
+                              _contamination ?? false,
+                              trueLabel: '있음',
+                              falseLabel: '이상 없음',
+                              dangerIfTrue: true,
+                            ),
+                          ],
+                        ),
+
+                        // 이물질 있을 때 경고 메시지
+                        if (_contamination == true) ...[
+                          const SizedBox(height: 8),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFEBEE),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Text(
+                              '⚠️ 이물질을 제거한 후 배출해주세요.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFFB71C1C),
+                                height: 1.5,
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -384,6 +469,32 @@ class _PhotoQuestionPageState extends State<PhotoQuestionPage> {
       child: Text(
         text,
         style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: fg),
+      ),
+    );
+  }
+
+  Widget _buildStatusChip(
+    bool isTrue, {
+    required String trueLabel,
+    required String falseLabel,
+    bool dangerIfTrue = false,
+  }) {
+    final Color bg = isTrue
+        ? (dangerIfTrue ? const Color(0xFFFFCDD2) : const Color(0xFFFFF9C4))
+        : const Color(0xFFDCEDC8);
+    final Color fg = isTrue
+        ? (dangerIfTrue ? const Color(0xFFB71C1C) : const Color(0xFFF57F17))
+        : const Color(0xFF33691E);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        isTrue ? trueLabel : falseLabel,
+        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: fg),
       ),
     );
   }
