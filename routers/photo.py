@@ -21,67 +21,67 @@ except Exception:
 
 # 감지 라벨 → 분리배출 정보 매핑
 LABEL_MAP = {
-    "종이": {
+    "paper": {
         "name": "종이",
         "category": "종이류",
         "steps": "① 테이프·스티커 제거\n② 납작하게 펼치기\n③ 종이류 수거함에 배출",
         "badges": [{"label": "종이류 ♻️", "bgColor": "BBDEFB", "textColor": "0D47A1"}],
     },
-    "종이팩": {
+    "paper_pack": {
         "name": "종이팩",
         "category": "종이류",
         "steps": "① 내용물 비우고 헹구기\n② 펼쳐서 말리기\n③ 종이팩 전용 수거함에 배출",
         "badges": [{"label": "종이팩 ♻️", "bgColor": "BBDEFB", "textColor": "0D47A1"}],
     },
-    "종이컵": {
+    "paper_cup": {
         "name": "종이컵",
         "category": "종이류",
         "steps": "① 내용물 비우고 헹구기\n② 종이컵 전용 수거함에 배출",
         "badges": [{"label": "종이컵 ♻️", "bgColor": "BBDEFB", "textColor": "0D47A1"}],
     },
-    "캔류": {
+    "can": {
         "name": "캔류",
         "category": "캔류",
         "steps": "① 내용물 비우고 헹구기\n② 찌그러트리기\n③ 캔 수거함에 배출",
         "badges": [{"label": "캔류 ♻️", "bgColor": "FFF9C4", "textColor": "7A6000"}],
     },
-    "재사용유리": {
+    "reusable_glass": {
         "name": "재사용유리",
         "category": "유리류",
         "steps": "① 내용물 비우고 헹구기\n② 뚜껑 분리\n③ 유리 수거함에 배출",
         "badges": [{"label": "유리류 ♻️", "bgColor": "E8EAF6", "textColor": "1A237E"}],
     },
-    "색깔유리": {
+    "colored_glass": {
         "name": "색깔유리",
         "category": "유리류",
         "steps": "① 내용물 비우고 헹구기\n② 뚜껑 분리\n③ 유리 수거함에 배출",
         "badges": [{"label": "유리류 ♻️", "bgColor": "E8EAF6", "textColor": "1A237E"}],
     },
-    "페트": {
+    "pet": {
         "name": "페트병",
         "category": "플라스틱류",
         "steps": "① 라벨 제거\n② 내용물 비우고 헹구기\n③ 찌그러트려 뚜껑 닫기\n④ 플라스틱 수거함에 배출",
         "badges": [{"label": "플라스틱 ♻️", "bgColor": "C8E6C9", "textColor": "1B5E20"}],
     },
-    "플라스틱": {
+    "plastic": {
         "name": "플라스틱",
         "category": "플라스틱류",
         "steps": "① 내용물 비우고 헹구기\n② 라벨 제거\n③ 플라스틱 수거함에 배출",
         "badges": [{"label": "플라스틱 ♻️", "bgColor": "C8E6C9", "textColor": "1B5E20"}],
     },
-    "비닐": {
+    "vinyl": {
         "name": "비닐",
         "category": "비닐류",
         "steps": "① 내용물 완전히 비우기\n② 이물질 제거\n③ 비닐 전용 수거함에 배출",
         "badges": [{"label": "비닐류 ♻️", "bgColor": "F8BBD0", "textColor": "880E4F"}],
     },
-    "스티로폼": {
+    "styrofoam": {
         "name": "스티로폼",
         "category": "스티로폼류",
         "steps": "① 이물질 제거\n② 테이프·스티커 제거\n③ 스티로폼 전용 수거함에 배출",
         "badges": [{"label": "스티로폼 ♻️", "bgColor": "F3E5F5", "textColor": "4A148C"}],
     },
-    "건전지": {
+    "battery": {
         "name": "건전지",
         "category": "건전지",
         "steps": "① 방전 확인\n② 건전지 전용 수거함에 배출\n③ 편의점, 마트 등에 비치된 수거함 이용",
@@ -115,7 +115,7 @@ async def analyze_ai(base64_image: str, media_type: str = "image/jpeg") -> dict:
                             },
                             {
                                 "type": "text",
-                                "text": "이 이미지를 분석해서 JSON으로만 답해줘. 다른 말은 하지마.\n{\"contamination\": true or false, \"multi_packaging\": true or false}\ncontamination: 이물질(음식물, 오염물) 있으면 true\nmulti_packaging: 다중포장재(여러 재질 혼합) 이면 true"
+                                "text": "이 이미지를 분석해서 JSON으로만 답해줘. 다른 말은 하지마.\n{\"contamination\": true or false, \"multi_packaging\": true or false}\ncontamination: 음식물, 기름, 오염물질 등 이물질이 있으면 true\nmulti_packaging: 플라스틱+금속, 종이+비닐처럼 서로 다른 재질이 결합되어 분리가 어려운 경우만 true. 단순히 라벨이나 스티커가 붙어있는 것은 false"
                             }
                         ]
                     }]
@@ -124,9 +124,18 @@ async def analyze_ai(base64_image: str, media_type: str = "image/jpeg") -> dict:
             )
             data = response.json()
             text = data["content"][0]["text"]
+            print(f"원본응답: {text}")
+
+            # 코드블록 제거
+            text = text.replace("```json", "").replace("```", "").strip()
+
             import json
-            return json.loads(text)
-    except Exception:
+            result = json.loads(text)
+            print(f"분석결과: {result}")     
+
+            return result
+    except Exception as e:
+        print(f"사진분석 오류: {e}")
         return {"contamination": False, "multi_packaging": False}
 
 @router.post("/analyze")
