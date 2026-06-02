@@ -270,9 +270,10 @@ class _MyPageState extends State<MyPage> {
   // 문의하기 다이얼로그
   // ───────────────────────────────────────────
   void _showInquiryDialog() {
-    final emailController = TextEditingController(
+    final idController = TextEditingController(
       text: UserSession.isLoggedIn ? UserSession.email ?? '' : '',
     );
+    final replyEmailController = TextEditingController();
     final contentController = TextEditingController();
 
     showModalBottomSheet(
@@ -281,104 +282,137 @@ class _MyPageState extends State<MyPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom,
-          left: 16,
-          right: 16,
-          top: 20,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '문의하기',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) {
+          // 버튼 활성화 조건: 이메일 + 문의내용 모두 입력
+          final bool canSubmit =
+              replyEmailController.text.trim().isNotEmpty &&
+              contentController.text.trim().isNotEmpty;
+
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom,
+              left: 16,
+              right: 16,
+              top: 20,
             ),
-            const SizedBox(height: 4),
-
-            // 이메일 입력 (로그인 시 자동 입력 + 읽기 전용)
-            TextField(
-              controller: emailController,
-              keyboardType: TextInputType.emailAddress,
-              readOnly: UserSession.isLoggedIn,
-              decoration: InputDecoration(
-                hintText: '아이디',
-                filled: true,
-                fillColor: UserSession.isLoggedIn
-                    ? const Color(0xFFEEEEEE)
-                    : const Color(0xFFF7F4F8),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '문의하기',
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
                 ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            // 문의 내용
-            TextField(
-              controller: contentController,
-              maxLines: 5,
-              decoration: InputDecoration(
-                hintText: '문의 내용을 입력해주세요',
-                filled: true,
-                fillColor: const Color(0xFFF7F4F8),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            GestureDetector(
-              onTap: () async {
-                final email = emailController.text.trim();
-                final content = contentController.text.trim();
+                const SizedBox(height: 12),
 
-                if (email.isEmpty || content.isEmpty) {
-                  ScaffoldMessenger.of(ctx).showSnackBar(
-                    const SnackBar(content: Text('아이디와 문의 내용을 입력해주세요.')),
-                  );
-                  return;
-                }
-
-                await ApiService.submitInquiry(email: email, content: content);
-
-                LogService.log(
-                  action: 'inquiry',
-                  detail: '문의내용: $content',
-                  userEmail: email,
-                );
-
-                if (!ctx.mounted) return;
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(
-                  ctx,
-                ).showSnackBar(const SnackBar(content: Text('문의가 접수되었어요! 😊')));
-              },
-              child: Container(
-                width: double.infinity,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFDD835),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Center(
-                  child: Text(
-                    '문의 보내기',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF5D4037),
+                // 아이디 (로그인 시 자동 입력 + 읽기 전용)
+                TextField(
+                  controller: idController,
+                  keyboardType: TextInputType.emailAddress,
+                  readOnly: UserSession.isLoggedIn,
+                  decoration: InputDecoration(
+                    hintText: '아이디',
+                    filled: true,
+                    fillColor: UserSession.isLoggedIn
+                        ? const Color(0xFFEEEEEE)
+                        : const Color(0xFFF7F4F8),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
                     ),
                   ),
                 ),
-              ),
+                const SizedBox(height: 10),
+
+                // 답장받을 이메일 주소 (필수)
+                TextField(
+                  controller: replyEmailController,
+                  keyboardType: TextInputType.emailAddress,
+                  onChanged: (_) => setModalState(() {}),
+                  decoration: InputDecoration(
+                    hintText: '답장받을 이메일 주소',
+                    filled: true,
+                    fillColor: const Color(0xFFF7F4F8),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+
+                // 문의 내용
+                TextField(
+                  controller: contentController,
+                  maxLines: 5,
+                  onChanged: (_) => setModalState(() {}),
+                  decoration: InputDecoration(
+                    hintText: '문의 내용을 입력해주세요',
+                    filled: true,
+                    fillColor: const Color(0xFFF7F4F8),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // 전송 버튼 (비활성화 시 회색)
+                GestureDetector(
+                  onTap: canSubmit
+                      ? () async {
+                          final id = idController.text.trim();
+                          final replyEmail = replyEmailController.text.trim();
+                          final content = contentController.text.trim();
+
+                          await ApiService.submitInquiry(
+                            email: id,
+                            content: content,
+                          );
+
+                          LogService.log(
+                            action: 'inquiry',
+                            detail: '문의내용: $content / 답장이메일: $replyEmail',
+                            userEmail: id,
+                          );
+
+                          if (!ctx.mounted) return;
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(ctx).showSnackBar(
+                            const SnackBar(content: Text('문의가 접수되었어요! 😊')),
+                          );
+                        }
+                      : null,
+                  child: Container(
+                    width: double.infinity,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: canSubmit
+                          ? const Color(0xFFFDD835)
+                          : const Color(0xFFDDDDDD),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '문의 보내기',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: canSubmit
+                              ? const Color(0xFF5D4037)
+                              : const Color(0xFFAAAAAA),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
             ),
-            const SizedBox(height: 20),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
